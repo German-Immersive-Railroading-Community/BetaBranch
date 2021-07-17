@@ -7,7 +7,18 @@ def download_link(sha):
 # using an access token
 g = Github(access_token)
 repo = g.get_repo(repo_name)
-for pull in repo.get_pulls(state='opem', sort='created', base='master'):
+
+# go through all pull requests
+for pull in repo.get_pulls(state='open', sort='created', direction = "desc", base='master'):
+    # get newest commit out of pull request
     coms = pull.get_commits()
+    id = pull.number
     com = coms[coms.totalCount-1]
-    os.system(f"wget -qO prs/{pull.number}.zip {download_link(com.sha)}")
+    # download and compile jar file
+    os.system(f"wget -qO prs/{id}.zip {download_link(com.sha)}")
+    os.system(f"unzip prs/{id} -d prs/")
+    folder = f"{repo.name}-{com.sha}"
+    os.system(f"chmod +x prs/{folder}/gradlew")
+    os.system(f"cd prs/{folder}/;./gradlew build")
+    os.system(f"cp prs/{folder}/build/libs/GIRSignals.jar jars/GIRSignals{id}.jar")
+    os.system("rm -R prs/*")
