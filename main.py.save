@@ -1,0 +1,12 @@
+from github import Github
+from vars import *
+
+# using an access token
+g = Github(access_token)
+repo = g.get_repo(repo_name)
+
+pulls = repo.get_pulls(state='closed', sort='created', base='master')
+print ( German-Immersive-Railroading-Community /
+GIRSignals .name)
+for file in pulls[60].get_files():
+    print (file.filename)
