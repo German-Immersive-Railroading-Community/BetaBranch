@@ -129,4 +129,7 @@ dmypy.json
 .pyre/
 #prs
 prs/*
-!somefolder/.gitkeep 
+!prs/.gitkeep 
+!java/.gitkeep
+!prs/.gitkeep
+java/*
