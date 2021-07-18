@@ -128,8 +128,7 @@ dmypy.json
 # Pyre type checker
 .pyre/
 #prs
-prs/*
+prs/
 !prs/.gitkeep 
 !jars/.gitkeep
-!prs/.gitkeep
-jars/*
+jars/
