@@ -9,7 +9,7 @@ g = Github(access_token)
 repo = g.get_repo(repo_name)
 
 # go through all pull requests
-for pull in repo.get_pulls(state='closed', sort='created', direction = "desc", base='master'):
+for pull in repo.get_pulls(state='open', sort='created', direction = "desc", base='master'):
     # get newest commit out of pull request
     coms = pull.get_commits()
     id = pull.number
