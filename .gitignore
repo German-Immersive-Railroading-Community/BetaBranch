@@ -130,6 +130,6 @@ dmypy.json
 #prs
 prs/*
 !prs/.gitkeep 
-!java/.gitkeep
+!jars/.gitkeep
 !prs/.gitkeep
-java/*
+jars/*
