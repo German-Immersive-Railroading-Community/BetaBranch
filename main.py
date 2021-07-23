@@ -6,7 +6,7 @@ import json
 class Requests(BaseHTTPRequestHandler):
     def do_POST(self):
         #print(self.rfile.read())
-        print(self.headers.get("HTTP_X_HUB_SIGNATURE_256"))
+        print(self.headers)
 
 context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
 context.load_cert_chain(config("cert_path"), config("priv_path"))
