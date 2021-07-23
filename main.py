@@ -8,7 +8,7 @@ import hmac
 class Requests(BaseHTTPRequestHandler):
     def do_POST(self):
         _rfile = self.rfile.read()
-        h_object = hmac.new(bytes(config("secret"), "utf8"), _rfile)
+        h_object = hmac.new(bytes(config("secret"), "utf8"), _rfile, hl.sha256)
         h_digest = h_object.hexdigest()
         print(h_digest)
         print(self.headers)
