@@ -2,10 +2,15 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 import ssl
 from decouple import config
 import json
+import hashlib as hl
+import hmac
 
 class Requests(BaseHTTPRequestHandler):
     def do_POST(self):
-        #print(self.rfile.read())
+        _rfile = self.rfile.read()
+        h_object = hmac.new(config("secret"), _rfile)
+        h_digest = h_object.hexdigest()
+        print(h_digest)
         print(self.headers)
 
 context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
