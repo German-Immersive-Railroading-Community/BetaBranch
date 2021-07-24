@@ -4,6 +4,7 @@ import json
 import ssl
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
+
 from decouple import config
 
 
@@ -17,6 +18,7 @@ class Requests(BaseHTTPRequestHandler):
             self.send_error(403, "Forbidden")
             return
         self.send_response(204)
+        self.end_headers()
 
 
 context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
