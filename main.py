@@ -16,7 +16,7 @@ class Requests(BaseHTTPRequestHandler):
         if not h_digest == str(self.headers["X-Hub-Signature-256"]):
             self.send_error(403, "Forbidden")
             return
-        self.send_response(200, "Sucessfull")
+        self.send_response(204)
 
 
 context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
