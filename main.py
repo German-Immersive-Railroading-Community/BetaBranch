@@ -4,6 +4,7 @@ import json
 import ssl
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import threading as th
+import urllib3 as url
 
 from decouple import config
 
@@ -13,6 +14,11 @@ def calc_digest(readfile, header):
     h_digest = "sha256=" + h_digest
     if not h_digest == str(header["X-Hub-Signature-256"]):
         return
+    json_rfile = json.loads(readfile)
+    head_ref = json_rfile["head"]["ref"]
+    http = url.PoolManager()
+    resp = http.request("GET", f"/api/projects/MrTroble/girsignals/branch/{head_ref}")
+    print(resp.data)
 
 class Requests(BaseHTTPRequestHandler):
     def do_POST(self):
