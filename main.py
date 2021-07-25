@@ -11,7 +11,7 @@ from decouple import config
 
 def implement(json, data):
     for key, value in json.items():
-        if type(value) == dict:# and key in dict:
+        if type(value) == dict and key in data:
             data[key] = implement(value, data[key])
         else:
             data[key] = value
