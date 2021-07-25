@@ -9,7 +9,7 @@ import urllib3 as url
 from decouple import config
 
 data = {}
-beta_json = json.loads(open(str(config("json_file")) + "beta.json"))
+beta_json = json.loads(open(str(config("json_file")) + "beta.json").read())
 
 def implement(json, data):
     for key, value in json.items():
