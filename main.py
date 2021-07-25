@@ -27,6 +27,8 @@ class Requests(BaseHTTPRequestHandler):
         self.send_header("X-Frame-Options", "SAMEORIGIN")
         self.send_header("X-Xss-Protection", "1; mode=block")
         self.end_headers()
+        self.wfile.write(bytes("Hello there", "utf8"))
+        self.wfile.close()
 
 
 context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
