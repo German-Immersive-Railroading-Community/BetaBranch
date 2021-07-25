@@ -3,21 +3,20 @@ import hmac
 import json
 import ssl
 from http.server import BaseHTTPRequestHandler, HTTPServer
-import time
+import threading as th
 
 from decouple import config
 
+def calc_digest(readfile, header):
+    h_object = hmac.new(bytes(config("secret"), "utf8"), readfile, hl.sha256)
+    h_digest = str(h_object.hexdigest())
+    h_digest = "sha256=" + h_digest
+    if not h_digest == str(header["X-Hub-Signature-256"]):
+        return
 
 class Requests(BaseHTTPRequestHandler):
     def do_POST(self):
-        _rfile = self.rfile.read()
-        h_object = hmac.new(bytes(config("secret"), "utf8"), _rfile, hl.sha256)
-        h_digest = str(h_object.hexdigest())
-        h_digest = "sha256=" + h_digest
-        if not h_digest == str(self.headers["X-Hub-Signature-256"]):
-            self.send_error(403, "Forbidden")
-            return
-        self.send_response(204)
+        self.send_response(204, "It worked!")
         self.send_header("Cache-Control", "no-cache")
         self.send_header("Expires", "-1")
         self.send_header("Pragma", "no-cache")
@@ -27,8 +26,9 @@ class Requests(BaseHTTPRequestHandler):
         self.send_header("X-Xss-Protection", "1; mode=block")
         self.send_header("Connection", "close")
         self.end_headers()
-        self.wfile.write(bytes("Hello there", "utf8"))
-
+        _rfile = self.rfile.read()
+        calc = th.Thread(target=calc_digest, args = (_rfile, self.headers))
+        calc.start()
 
 context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
 context.load_cert_chain(config("cert_path"), config("priv_path"))
