@@ -19,7 +19,7 @@ def calc_digest(readfile, header):
     print(head_ref)
     http = url.PoolManager()
     resp = http.request("GET", f"https://ci.appveyor.com/api/projects/MrTroble/girsignals/branch/{head_ref}")
-    json_resp = json.loads(resp)
+    json_resp = json.loads(resp.data)
     job_id = json_resp["build"]["jobs"]["jobId"]
     art_resp = http.request("GET", f"https://ci.appveyor.com/api/buildjobs/{job_id}/artifacts")
     print(art_resp.data)
