@@ -12,8 +12,8 @@ data = {}
 try:
     beta_json = json.loads(open(str(config("json_file"))))
 except FileNotFoundError:
-    beta_file = open(config("json_file"), "w+")
-    beta_json = json.loads(beta_file)
+    print("Please create the json file specified in the envvars!")
+    exit()
 
 def implement(json, data):
     for key, value in json.items():
