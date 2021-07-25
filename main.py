@@ -17,7 +17,7 @@ def calc_digest(readfile, header):
     json_rfile = json.loads(readfile)
     head_ref = json_rfile["pull_request"]["head"]["ref"]
     http = url.PoolManager()
-    resp = http.request("GET", f"/api/projects/MrTroble/girsignals/branch/{head_ref}")
+    resp = http.request("GET", f"https://ci.appveyor.com/api/projects/MrTroble/girsignals/branch/{head_ref}")
     print(resp.data)
 
 class Requests(BaseHTTPRequestHandler):
