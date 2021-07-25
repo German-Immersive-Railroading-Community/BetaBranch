@@ -8,8 +8,6 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import urllib3 as url
 from decouple import config
 
-data = {}
-beta_json = json.loads(open(str(config("json_file")) + "beta.json").read())
 
 def implement(json, data):
     for key, value in json.items():
@@ -19,15 +17,30 @@ def implement(json, data):
             data[key] = value
     return data
 
-print(implement(beta_json, data), "Confirm")
 
-def calc_digest(readfile, header):
+json_file = str(config("json_file")) + "beta.json"
+
+
+def json_dump(data):
+    with open(json_file) as dump_file:
+        json.dump(data, dump_file)
+
+
+data = {}
+with open(json_file) as _file:
+    beta_json = json.loads(_file.read())
+data = implement(beta_json, data)
+
+
+def calc_digest(readfile, header, json_rfile):
     h_object = hmac.new(bytes(config("secret"), "utf8"), readfile, hl.sha256)
     h_digest = str(h_object.hexdigest())
     h_digest = "sha256=" + h_digest
     if not h_digest == str(header["X-Hub-Signature-256"]):
         return
-    json_rfile = json.loads(readfile)
+    if not str(json_rfile["number"]) in data:
+        data[str(json_rfile["number"])] = {}
+    data[str(json_rfile["number"])]["name"] = json_rfile["pull_request"]["title"]
     head_ref = json_rfile["pull_request"]["head"]["ref"]
     print(head_ref)
     http = url.PoolManager()
@@ -39,6 +52,9 @@ def calc_digest(readfile, header):
         "GET", f"https://ci.appveyor.com/api/buildjobs/{job_id}/artifacts")
     artifacts = json.loads(art_resp)
     filename = artifacts[0]["filename"]
+    data[str(json_rfile["number"])
+         ]["download"] = f"https://ci.appveyor.com/api/buildjobs/{job_id}/artifacts/{filename}"
+    json_dump(data)
 
 
 class Requests(BaseHTTPRequestHandler):
@@ -54,8 +70,14 @@ class Requests(BaseHTTPRequestHandler):
         self.send_header("Connection", "close")
         self.end_headers()
         _rfile = self.rfile.read()
-        calc = th.Thread(target=calc_digest, args=(_rfile, self.headers))
-        calc.start()
+        json_rfile = json.loads(_rfile)
+        if json_rfile["action"] == "closed":
+            del data[str(json_rfile["number"])]
+            json_dump(data)
+        else:
+            calc = th.Thread(target=calc_digest, args=(
+                _rfile, self.headers, json_rfile))
+            calc.start()
 
 
 context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
