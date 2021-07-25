@@ -50,7 +50,7 @@ def calc_digest(readfile, header, json_rfile):
     art_resp = http.request(
         "GET", f"https://ci.appveyor.com/api/buildjobs/{job_id}/artifacts")
     artifacts = json.loads(art_resp.data)
-    filename = artifacts[0]["filename"]
+    filename = artifacts[0]["fileName"]
     data[str(json_rfile["number"])
          ]["download"] = f"https://ci.appveyor.com/api/buildjobs/{job_id}/artifacts/{filename}"
     json_dump(data)
