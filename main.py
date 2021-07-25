@@ -42,7 +42,6 @@ def calc_digest(readfile, header, json_rfile):
         data[str(json_rfile["number"])] = {}
     data[str(json_rfile["number"])]["name"] = json_rfile["pull_request"]["title"]
     head_ref = json_rfile["pull_request"]["head"]["ref"]
-    print(head_ref)
     http = url.PoolManager()
     resp = http.request(
         "GET", f"https://ci.appveyor.com/api/projects/MrTroble/girsignals/branch/{head_ref}")
@@ -50,7 +49,7 @@ def calc_digest(readfile, header, json_rfile):
     job_id = json_resp["build"]["jobs"][0]["jobId"]
     art_resp = http.request(
         "GET", f"https://ci.appveyor.com/api/buildjobs/{job_id}/artifacts")
-    artifacts = json.loads(art_resp)
+    artifacts = json.loads(art_resp.data)
     filename = artifacts[0]["filename"]
     data[str(json_rfile["number"])
          ]["download"] = f"https://ci.appveyor.com/api/buildjobs/{job_id}/artifacts/{filename}"
