@@ -19,16 +19,15 @@ class Requests(BaseHTTPRequestHandler):
             return
         self.send_response(204)
         self.send_header("Cache-Control", "no-cache")
-        self.send_header("Date", time.strftime(" %a, %d %b %Y %H:%M:%S %Z")) #Wed, 23 Jun 2021 08:59:30 GMT
         self.send_header("Expires", "-1")
         self.send_header("Pragma", "no-cache")
         self.send_header("Strict-Transport-Security", "max-age=31536000")
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("X-Frame-Options", "SAMEORIGIN")
         self.send_header("X-Xss-Protection", "1; mode=block")
+        self.send_header("Connection", "close")
         self.end_headers()
         self.wfile.write(bytes("Hello there", "utf8"))
-        self.wfile.close()
 
 
 context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
