@@ -2,11 +2,28 @@ import hashlib as hl
 import hmac
 import json
 import ssl
-from http.server import BaseHTTPRequestHandler, HTTPServer
 import threading as th
-import urllib3 as url
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
+import urllib3 as url
 from decouple import config
+
+data = {}
+try:
+    beta_json = json.loads(open(str(config("json_file"))))
+except FileNotFoundError:
+    beta_file = open(config("json_file"), "w+")
+    beta_json = json.loads(beta_file)
+
+def implement(json, data):
+    for key, value in json.items():
+        if type(value) == dict and key in dict:
+            data[key] = implement(value, data[key])
+        else:
+            data[key] = value
+    return data
+
+print(implement(beta_json, data), "Confirm")
 
 def calc_digest(readfile, header):
     h_object = hmac.new(bytes(config("secret"), "utf8"), readfile, hl.sha256)
@@ -18,11 +35,15 @@ def calc_digest(readfile, header):
     head_ref = json_rfile["pull_request"]["head"]["ref"]
     print(head_ref)
     http = url.PoolManager()
-    resp = http.request("GET", f"https://ci.appveyor.com/api/projects/MrTroble/girsignals/branch/{head_ref}")
+    resp = http.request(
+        "GET", f"https://ci.appveyor.com/api/projects/MrTroble/girsignals/branch/{head_ref}")
     json_resp = json.loads(resp.data)
     job_id = json_resp["build"]["jobs"][0]["jobId"]
-    art_resp = http.request("GET", f"https://ci.appveyor.com/api/buildjobs/{job_id}/artifacts")
-    print(art_resp.data)
+    art_resp = http.request(
+        "GET", f"https://ci.appveyor.com/api/buildjobs/{job_id}/artifacts")
+    artifacts = json.loads(art_resp)
+    filename = artifacts[0]["filename"]
+
 
 class Requests(BaseHTTPRequestHandler):
     def do_POST(self):
@@ -37,8 +58,9 @@ class Requests(BaseHTTPRequestHandler):
         self.send_header("Connection", "close")
         self.end_headers()
         _rfile = self.rfile.read()
-        calc = th.Thread(target=calc_digest, args = (_rfile, self.headers))
+        calc = th.Thread(target=calc_digest, args=(_rfile, self.headers))
         calc.start()
+
 
 context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
 context.load_cert_chain(config("cert_path"), config("priv_path"))
