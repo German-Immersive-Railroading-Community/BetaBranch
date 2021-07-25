@@ -22,12 +22,12 @@ json_file = str(config("json_file")) + "beta.json"
 
 
 def json_dump(data):
-    with open(json_file) as dump_file:
+    with open(json_file, "w+") as dump_file:
         json.dump(data, dump_file)
 
 
 data = {}
-with open(json_file) as _file:
+with open(json_file, "r+") as _file:
     beta_json = json.loads(_file.read())
 data = implement(beta_json, data)
 
