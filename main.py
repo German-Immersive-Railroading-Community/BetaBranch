@@ -9,11 +9,7 @@ import urllib3 as url
 from decouple import config
 
 data = {}
-try:
-    beta_json = json.loads(open(str(config("json_file"))))
-except FileNotFoundError:
-    print("Please create the json file specified in the envvars!")
-    exit()
+beta_json = json.loads(open(str(config("json_file")) + "beta.json"))
 
 def implement(json, data):
     for key, value in json.items():
