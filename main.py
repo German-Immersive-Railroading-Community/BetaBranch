@@ -15,7 +15,7 @@ def calc_digest(readfile, header):
     if not h_digest == str(header["X-Hub-Signature-256"]):
         return
     json_rfile = json.loads(readfile)
-    head_ref = json_rfile["head"]["ref"]
+    head_ref = json_rfile["pull_request"]["head"]["ref"]
     http = url.PoolManager()
     resp = http.request("GET", f"/api/projects/MrTroble/girsignals/branch/{head_ref}")
     print(resp.data)
