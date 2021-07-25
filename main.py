@@ -16,6 +16,7 @@ def calc_digest(readfile, header):
         return
     json_rfile = json.loads(readfile)
     head_ref = json_rfile["pull_request"]["head"]["ref"]
+    print(head_ref)
     http = url.PoolManager()
     resp = http.request("GET", f"https://ci.appveyor.com/api/projects/MrTroble/girsignals/branch/{head_ref}")
     print(resp.data)
