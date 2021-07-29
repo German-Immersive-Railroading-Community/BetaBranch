@@ -4,6 +4,7 @@ import json
 import ssl
 import threading as th
 from http.server import BaseHTTPRequestHandler, HTTPServer
+import time
 
 import urllib3 as url
 from decouple import config
@@ -71,7 +72,12 @@ class Requests(BaseHTTPRequestHandler):
         _rfile = self.rfile.read()
         json_rfile = json.loads(_rfile)
         if json_rfile["action"] == "closed":
-            del data[str(json_rfile["number"])]
+            entry_number = str(json_rfile["number"])
+            try:
+                del data[entry_number]
+            except KeyError:
+                t = time.strftime("%H:%M:%S", time.localtime())
+                print(f"There was a error deleting a entry! Entry: {entry_number}, Time of Error: {t} .")
             json_dump(data)
         else:
             calc = th.Thread(target=calc_digest, args=(
