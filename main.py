@@ -57,7 +57,7 @@ def calc_digest(readfile, header, json_rfile, repo):
     while not ListEmpty:
         time.sleep(150)
         resp = http.request(
-            "GET", f"https://ci.appveyor.com/api/projects/MrTroble/girsignals/branch/{head_ref}")
+            "GET", f"https://ci.appveyor.com/api/projects/MrTroble/{repo}/branch/{head_ref}")
         json_resp = json.loads(resp.data)
         job_id = json_resp["build"]["jobs"][0]["jobId"]
         art_resp = http.request(
@@ -65,6 +65,7 @@ def calc_digest(readfile, header, json_rfile, repo):
         artifacts = json.loads(art_resp.data)
         try:
             filename = artifacts[0]["fileName"]
+            ListEmpty = True
         except IndexError:
             continue
     data[repo][str(json_rfile["number"])
