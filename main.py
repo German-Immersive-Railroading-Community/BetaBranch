@@ -11,6 +11,7 @@ from decouple import config
 
 
 def implement(json, data):
+    #I really don't know how, but it works... Ask Kontiko
     for key, value in json.items():
         if type(value) == dict and key in data:
             data[key] = implement(value, data[key])
@@ -34,15 +35,20 @@ data = implement(beta_json, data)
 
 
 def calc_digest(readfile, header, json_rfile):
+    #Calculate hmac
     h_object = hmac.new(bytes(config("secret"), "utf8"), readfile, hl.sha256)
     h_digest = str(h_object.hexdigest())
     h_digest = "sha256=" + h_digest
+    #Check the hmac
     if not h_digest == str(header["X-Hub-Signature-256"]):
         return
+    #Check if PR exists in json
     if not str(json_rfile["number"]) in data:
         data[str(json_rfile["number"])] = {}
+    #Setting the json and getting branch name
     data[str(json_rfile["number"])]["name"] = json_rfile["pull_request"]["title"]
     head_ref = json_rfile["pull_request"]["head"]["ref"]
+    #getting the Artifact URL... Technically; adding that to the json
     http = url.PoolManager()
     resp = http.request(
         "GET", f"https://ci.appveyor.com/api/projects/MrTroble/girsignals/branch/{head_ref}")
@@ -71,6 +77,7 @@ class Requests(BaseHTTPRequestHandler):
         self.end_headers()
         _rfile = self.rfile.read()
         json_rfile = json.loads(_rfile)
+        #Check if closed or not
         if json_rfile["action"] == "closed":
             entry_number = str(json_rfile["number"])
             try:
@@ -79,6 +86,7 @@ class Requests(BaseHTTPRequestHandler):
                 t = time.strftime("%H:%M:%S", time.localtime())
                 print(f"There was a error deleting a entry! Entry: {entry_number}, Time of Error: {t} .")
             json_dump(data)
+        #start the magic
         else:
             calc = th.Thread(target=calc_digest, args=(
                 _rfile, self.headers, json_rfile))
