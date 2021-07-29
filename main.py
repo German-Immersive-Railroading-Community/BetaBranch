@@ -44,6 +44,8 @@ def calc_digest(readfile, header, json_rfile, repo):
         return
     
     #Check if PR exists in json
+    if not repo in data:
+        data[repo] = {}
     if not str(json_rfile["number"]) in data[repo]:
         data[repo][str(json_rfile["number"])] = {}
     
