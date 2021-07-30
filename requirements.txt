@@ -1,5 +1,4 @@
 autopep8==1.5.7
-pip-autoremove==0.9.1
 pycodestyle==2.7.0
 python-decouple==3.4
 toml==0.10.2
