@@ -37,13 +37,14 @@ data = implement(beta_json, data)
 http = url.PoolManager()
 
 
-def postTestServer(event, number, fileURL=""):
+def postTestServer(event: str, number: str, repo: str, fileURL: str = "") -> None:
     valid = False
     while not valid:
         testRequest = {}
         testRequest["event"] = event
-        testRequest["prNumber"] = str(number)
+        testRequest["prNumber"] = number
         testRequest["modFile"] = fileURL
+        testResp["repo"] = repo
         len_cont = len(str(testRequest))
         testResp = http.request(
             "POST", "wgrmur2iejm3iuat.myfritz.net:4433", fields=testRequest, headers={f"Content-Length: {len_cont}"})
@@ -54,11 +55,12 @@ def postTestServer(event, number, fileURL=""):
                 f"Request to Testserver was not OK! Code: {str(testResp.status)}, Time: {t} . Retrying...")
             continue
         else:
+            data[repo][number]["port"] = testResp.reason
+            json_dump(data)
             valid = True
-    return
 
 
-def calc_digest(readfile, header, json_rfile, repo):
+def calc_digest(readfile, header, json_rfile, repo) -> None:
     # Calculate hmac
     h_object = hmac.new(bytes(config("secret"), "utf8"), readfile, hl.sha256)
     h_digest = str(h_object.hexdigest())
@@ -97,8 +99,8 @@ def calc_digest(readfile, header, json_rfile, repo):
     data[repo][str(json_rfile["number"])
                ]["download"] = f"https://ci.appveyor.com/api/buildjobs/{job_id}/artifacts/{filename}"
     send_payload = th.Thread(target=postTestServer, args=(
-        "update", json_rfile["number"], data[repo][str(json_rfile["number"])
-                                                   ]["download"]))
+        "update", json_rfile["number"], repo, data[repo][str(json_rfile["number"])
+                                                         ]["download"]))
     send_payload.start()
     json_dump(data)
 
