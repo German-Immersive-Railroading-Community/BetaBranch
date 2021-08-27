@@ -57,8 +57,8 @@ def postTestServer(event: str, number: str, repo: str, originRepo : str, fileURL
                 f"Request to Testserver was not OK! Code: {str(testResp.status)}, Time: {t} . Retrying...")
             continue
         else:
-            data[repo][number]["port"] = testResp.reason
-            json_dump(data)
+            if not event == "remove":
+                data[repo][number]["port"] = testResp.reason
             valid = True
     json_dump(data)
 

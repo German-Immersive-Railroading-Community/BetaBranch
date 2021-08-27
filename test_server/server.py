@@ -40,7 +40,7 @@ class Requests(BaseHTTPRequestHandler):
         port = ""
         if req["event"] == "update":
             port = self.update(req)
-        if req["event"] == "delete":
+        if req["event"] == "remove":
             self.delete(req)
             port = "Server deleted!"
         self.send_response(204, str(port))
