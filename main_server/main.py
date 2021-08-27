@@ -63,7 +63,7 @@ def postTestServer(event: str, number: str, repo: str, fileURL: str = "") -> Non
     json_dump(data)
 
 
-def calc_digest(readfile, header, json_rfile, repo) -> None:
+def calc_digest(readfile, header, json_rfile, repo, originRepo) -> None:
     # Calculate hmac
     h_object = hmac.new(bytes(config("secret"), "utf8"), readfile, hl.sha256)
     h_digest = str(h_object.hexdigest())
@@ -104,7 +104,7 @@ def calc_digest(readfile, header, json_rfile, repo) -> None:
     data[repo][number
                ]["download"] = f"https://ci.appveyor.com/api/buildjobs/{job_id}/artifacts/{filename}"
     send_payload = th.Thread(target=postTestServer, args=(
-        "update", number, repo, data[repo][number
+        "update", number, originRepo, data[repo][number
                                                          ]["download"]))
     send_payload.start()
     json_dump(data)
@@ -125,6 +125,7 @@ class Requests(BaseHTTPRequestHandler):
         _rfile = self.rfile.read()
         json_rfile = json.loads(_rfile)
         # Determine Repo
+        originRepo = json_rfile["pull_request"]["head"]["repo"]["name"]
         repo = str(json_rfile["pull_request"]["head"]["repo"]["name"]).lower()
         # Check if closed or not
         if json_rfile["action"] == "closed":
@@ -142,7 +143,7 @@ class Requests(BaseHTTPRequestHandler):
         # start the magic
         else:
             calc = th.Thread(target=calc_digest, args=(
-                _rfile, self.headers, json_rfile, repo))
+                _rfile, self.headers, json_rfile, repo, originRepo))
             calc.start()
 
 
