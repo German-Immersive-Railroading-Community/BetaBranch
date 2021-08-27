@@ -29,7 +29,7 @@ class Requests(BaseHTTPRequestHandler):
             self.send_response(400, "Wrong message")
             raise Exception("payload is no json")
         # check content
-        if not set(("event", "prNumber", "repo", "modfile")) == set(req.keys()):
+        if not set(("event", "prNumber", "repo", "modFile")) == set(req.keys()):
             self.send_response(400, "Wrong json structure")
             raise Exception("Wrong json structure")
         if req["prNumber"] == "":
@@ -50,7 +50,7 @@ class Requests(BaseHTTPRequestHandler):
         if self.ports.is_port_avail():
             port = self.ports.get_port(f"{req['repo']}-{req['prNumber']}")
             x = threading.Thread(target=functions.create_server, args=(
-                port, req['prNumber'], req['repo'], req['modfile']))
+                port, req['prNumber'], req['repo'], req['modFile']))
             x.start()
         else:
             self.queue.append(req)
