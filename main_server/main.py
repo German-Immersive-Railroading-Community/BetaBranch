@@ -120,7 +120,7 @@ class Requests(BaseHTTPRequestHandler):
         _rfile = self.rfile.read()
         json_rfile = json.loads(_rfile)
         # Determine Repo
-        repo = str(json_rfile["head"]["repo"]["name"]).lower()
+        repo = str(json_rfile["pull_request"]["head"]["repo"]["name"]).lower()
         # Check if closed or not
         if json_rfile["action"] == "closed":
             entry_number = str(json_rfile["number"])
