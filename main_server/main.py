@@ -46,8 +46,9 @@ def postTestServer(event: str, number: str, repo: str, fileURL: str = "") -> Non
         testRequest["modFile"] = fileURL
         testRequest["repo"] = repo
         len_cont = len(str(testRequest))
+        data_body = json.dumps(testRequest).encode("utf-8")
         testResp = http.request(
-            "POST", "wgrmur2iejm3iuat.myfritz.net:25580", fields=str(testRequest), headers={"Content-Length": f"{len_cont}"})
+            "POST", "wgrmur2iejm3iuat.myfritz.net:25580", body=data_body, headers={"Content-Length": f"{len_cont}"})
         time.sleep(5)
         if not testResp.status == 200:
             t = time.strftime("%H:%M:%S", time.localtime())
