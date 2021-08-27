@@ -131,7 +131,7 @@ class Requests(BaseHTTPRequestHandler):
         if json_rfile["action"] == "closed":
             entry_number = str(json_rfile["number"])
             send_payload = th.Thread(target=postTestServer, args=(
-                "remove", entry_number))
+                "remove", entry_number, repo, originRepo))
             send_payload.start()
             try:
                 del data[repo][entry_number]
