@@ -2,7 +2,7 @@
 The System which let's the Betabranches work.
 
 ## .env Files
-There are two env files. One for the main server and one for the test.
+There are two env files. One for the main server and one for the test.  
 Main:
 ```
 cert_path=<path to .pem certificate>
