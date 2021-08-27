@@ -47,7 +47,7 @@ def postTestServer(event: str, number: str, repo: str, fileURL: str = "") -> Non
         testRequest["repo"] = repo
         len_cont = len(str(testRequest))
         testResp = http.request(
-            "POST", "wgrmur2iejm3iuat.myfritz.net:25580", fields=testRequest, headers={f"Content-Length: {len_cont}"})
+            "POST", "wgrmur2iejm3iuat.myfritz.net:25580", fields=testRequest, headers={"Content-Length": f"{len_cont}"})
         time.sleep(5)
         if not testResp.status == 200:
             t = time.strftime("%H:%M:%S", time.localtime())
@@ -58,6 +58,7 @@ def postTestServer(event: str, number: str, repo: str, fileURL: str = "") -> Non
             data[repo][number]["port"] = testResp.reason
             json_dump(data)
             valid = True
+    json_dump(data)
 
 
 def calc_digest(readfile, header, json_rfile, repo) -> None:
@@ -83,7 +84,7 @@ def calc_digest(readfile, header, json_rfile, repo) -> None:
     # getting the Artifact URL... Technically; adding that to the json
     ListEmpty = False
     while not ListEmpty:
-        time.sleep(150)
+        #time.sleep(150)
         resp = http.request(
             "GET", f"https://ci.appveyor.com/api/projects/MrTroble/{repo}/branch/{head_ref}", headers={"Content-Type": "application/json"})
         json_resp = json.loads(resp.data)
