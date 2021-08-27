@@ -104,7 +104,7 @@ def calc_digest(readfile, header, json_rfile, repo) -> None:
     data[repo][number
                ]["download"] = f"https://ci.appveyor.com/api/buildjobs/{job_id}/artifacts/{filename}"
     send_payload = th.Thread(target=postTestServer, args=(
-        "update", json_rfile["number"], repo, data[repo][json_rfile["number"]
+        "update", number, repo, data[repo][number
                                                          ]["download"]))
     send_payload.start()
     json_dump(data)
@@ -130,7 +130,7 @@ class Requests(BaseHTTPRequestHandler):
         if json_rfile["action"] == "closed":
             entry_number = str(json_rfile["number"])
             send_payload = th.Thread(target=postTestServer, args=(
-                "remove", json_rfile["number"]))
+                "remove", entry_number))
             send_payload.start()
             try:
                 del data[repo][entry_number]
