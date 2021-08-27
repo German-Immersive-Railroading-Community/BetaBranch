@@ -11,7 +11,7 @@ from decouple import config
 
 
 def implement(json, data):
-    #I really don't know how, but it works... Ask Kontiko
+    # I really don't know how, but it works... Ask Kontiko
     for key, value in json.items():
         if type(value) == dict and key in data:
             data[key] = implement(value, data[key])
@@ -20,7 +20,9 @@ def implement(json, data):
     return data
 
 
+http = url.PoolManager()
 json_file = str(config("json_file")) + "beta.json"
+data = {}
 
 
 def json_dump(data):
@@ -28,38 +30,66 @@ def json_dump(data):
         json.dump(data, dump_file)
 
 
-data = {}
 with open(json_file, "r+") as _file:
     beta_json = json.loads(_file.read())
 data = implement(beta_json, data)
 
+http = url.PoolManager()
 
-def calc_digest(readfile, header, json_rfile, repo):
-    #Calculate hmac
+
+def postTestServer(event: str, number: str, repo: str, originRepo : str, fileURL: str = "") -> None:
+    valid = False
+    number = str(number)
+    while not valid:
+        testRequest = {}
+        testRequest["event"] = event
+        testRequest["prNumber"] = number
+        testRequest["modFile"] = fileURL
+        testRequest["repo"] = originRepo
+        len_cont = len(str(testRequest))
+        data_body = json.dumps(testRequest).encode("utf-8")
+        testResp = http.request(
+            "POST", "wgrmur2iejm3iuat.myfritz.net:25580", body=data_body, headers={"Content-Length": f"{len_cont}"})
+        time.sleep(5)
+        if not testResp.status == 204:
+            t = time.strftime("%H:%M:%S", time.localtime())
+            print(
+                f"Request to Testserver was not OK! Code: {str(testResp.status)}, Time: {t} . Retrying...")
+            continue
+        else:
+            if not event == "remove":
+                data[repo][number]["port"] = testResp.reason
+            valid = True
+    json_dump(data)
+
+
+def calc_digest(readfile, header, json_rfile, repo, originRepo) -> None:
+    # Calculate hmac
     h_object = hmac.new(bytes(config("secret"), "utf8"), readfile, hl.sha256)
     h_digest = str(h_object.hexdigest())
     h_digest = "sha256=" + h_digest
-    #Check the hmac
+    # Check the hmac
     if not h_digest == str(header["X-Hub-Signature-256"]):
         return
-    
-    #Check if PR exists in json
+
+    number = str(json_rfile["number"])
+    # Check if PR exists in json
     if not repo in data:
         data[repo] = {}
-    if not str(json_rfile["number"]) in data[repo]:
-        data[repo][str(json_rfile["number"])] = {}
-    
-    #Setting the json and getting branch name
-    data[repo][str(json_rfile["number"])]["name"] = json_rfile["pull_request"]["title"]
+    if not number in data[repo]:
+        data[repo][number] = {}
+
+    # Setting the json and getting branch name
+    data[repo][number
+               ]["name"] = json_rfile["pull_request"]["title"]
     head_ref = json_rfile["pull_request"]["head"]["ref"]
-    
-    #getting the Artifact URL... Technically; adding that to the json
+
+    # getting the Artifact URL... Technically; adding that to the json
     ListEmpty = False
-    http = url.PoolManager()
     while not ListEmpty:
-        time.sleep(150)
+        time.sleep(120)
         resp = http.request(
-            "GET", f"https://ci.appveyor.com/api/projects/MrTroble/{repo}/branch/{head_ref}")
+            "GET", f"https://ci.appveyor.com/api/projects/MrTroble/{repo}/branch/{head_ref}", headers={"Content-Type": "application/json"})
         json_resp = json.loads(resp.data)
         job_id = json_resp["build"]["jobs"][0]["jobId"]
         art_resp = http.request(
@@ -69,9 +99,14 @@ def calc_digest(readfile, header, json_rfile, repo):
             filename = artifacts[0]["fileName"]
             ListEmpty = True
         except IndexError:
+            print("No build avaiable! Retrying...")
             continue
-    data[repo][str(json_rfile["number"])
-         ]["download"] = f"https://ci.appveyor.com/api/buildjobs/{job_id}/artifacts/{filename}"
+    data[repo][number
+               ]["download"] = f"https://ci.appveyor.com/api/buildjobs/{job_id}/artifacts/{filename}"
+    send_payload = th.Thread(target=postTestServer, args=(
+        "update", number, repo, originRepo, data[repo][number
+                                                         ]["download"]))
+    send_payload.start()
     json_dump(data)
 
 
@@ -89,24 +124,30 @@ class Requests(BaseHTTPRequestHandler):
         self.end_headers()
         _rfile = self.rfile.read()
         json_rfile = json.loads(_rfile)
-        #Determine Repo
-        repo = str(json_rfile["head"]["repo"]["name"]).lower()
-        #Check if closed or not
+        # Determine Repo
+        originRepo = json_rfile["pull_request"]["head"]["repo"]["name"]
+        repo = str(json_rfile["pull_request"]["head"]["repo"]["name"]).lower()
+        # Check if closed or not
         if json_rfile["action"] == "closed":
             entry_number = str(json_rfile["number"])
+            send_payload = th.Thread(target=postTestServer, args=(
+                "remove", entry_number, repo, originRepo))
+            send_payload.start()
             try:
                 del data[repo][entry_number]
             except KeyError:
                 t = time.strftime("%H:%M:%S", time.localtime())
-                print(f"There was a error deleting a entry! Repo: {repo}, Entry: {entry_number}, Time of Error: {t} .")
+                print(
+                    f"There was a error deleting a entry! Repo: {repo}, Entry: {entry_number}, Time of Error: {t} .")
             json_dump(data)
-        #start the magic
+        # start the magic
         else:
             calc = th.Thread(target=calc_digest, args=(
-                _rfile, self.headers, json_rfile, repo))
+                _rfile, self.headers, json_rfile, repo, originRepo))
             calc.start()
 
-#Starting Webserver
+
+# Starting Webserver
 context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
 context.load_cert_chain(config("cert_path"), config("priv_path"))
 context.load_verify_locations(config("full_path"))
