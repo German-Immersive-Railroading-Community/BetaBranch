@@ -37,7 +37,7 @@ data = implement(beta_json, data)
 http = url.PoolManager()
 
 
-def postTestServer(event: str, number: str, repo: str, fileURL: str = "") -> None:
+def postTestServer(event: str, number: str, repo: str, originRepo : str, fileURL: str = "") -> None:
     valid = False
     number = str(number)
     while not valid:
@@ -45,7 +45,7 @@ def postTestServer(event: str, number: str, repo: str, fileURL: str = "") -> Non
         testRequest["event"] = event
         testRequest["prNumber"] = number
         testRequest["modFile"] = fileURL
-        testRequest["repo"] = repo
+        testRequest["repo"] = originRepo
         len_cont = len(str(testRequest))
         data_body = json.dumps(testRequest).encode("utf-8")
         testResp = http.request(
@@ -87,7 +87,7 @@ def calc_digest(readfile, header, json_rfile, repo, originRepo) -> None:
     # getting the Artifact URL... Technically; adding that to the json
     ListEmpty = False
     while not ListEmpty:
-        #time.sleep(150)
+        time.sleep(120)
         resp = http.request(
             "GET", f"https://ci.appveyor.com/api/projects/MrTroble/{repo}/branch/{head_ref}", headers={"Content-Type": "application/json"})
         json_resp = json.loads(resp.data)
@@ -104,7 +104,7 @@ def calc_digest(readfile, header, json_rfile, repo, originRepo) -> None:
     data[repo][number
                ]["download"] = f"https://ci.appveyor.com/api/buildjobs/{job_id}/artifacts/{filename}"
     send_payload = th.Thread(target=postTestServer, args=(
-        "update", number, originRepo, data[repo][number
+        "update", number, repo, originRepo, data[repo][number
                                                          ]["download"]))
     send_payload.start()
     json_dump(data)
