@@ -44,7 +44,7 @@ def postTestServer(event: str, number: str, repo: str, fileURL: str = "") -> Non
         testRequest["event"] = event
         testRequest["prNumber"] = number
         testRequest["modFile"] = fileURL
-        testResp["repo"] = repo
+        testRequest["repo"] = repo
         len_cont = len(str(testRequest))
         testResp = http.request(
             "POST", "wgrmur2iejm3iuat.myfritz.net:4433", fields=testRequest, headers={f"Content-Length: {len_cont}"})
