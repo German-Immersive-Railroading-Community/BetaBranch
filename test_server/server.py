@@ -37,11 +37,13 @@ class Requests(BaseHTTPRequestHandler):
             raise Exception("No pr_number given")
 
         # do stuff
+        port = ""
         if req["event"] == "update":
-            self.update(req)
+            port = self.update(req)
         if req["event"] == "delete":
             self.delete(req)
-        self.send_response(204, "Payload recieved")
+            port = "Server deleted!"
+        self.send_response(204, str(port))
         self.end_headers()
 
     def update(self, req):
@@ -53,6 +55,7 @@ class Requests(BaseHTTPRequestHandler):
         else:
             self.queue.append(req)
             self.update_json()
+        return port
 
     def delete(self, req):
         self.ports.remove_port(f"{req['repo']}-{req['prNumber']}")
