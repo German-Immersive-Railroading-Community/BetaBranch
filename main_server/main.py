@@ -39,6 +39,7 @@ http = url.PoolManager()
 
 def postTestServer(event: str, number: str, repo: str, fileURL: str = "") -> None:
     valid = False
+    number = str(number)
     while not valid:
         testRequest = {}
         testRequest["event"] = event
@@ -102,7 +103,7 @@ def calc_digest(readfile, header, json_rfile, repo) -> None:
     data[repo][str(json_rfile["number"])
                ]["download"] = f"https://ci.appveyor.com/api/buildjobs/{job_id}/artifacts/{filename}"
     send_payload = th.Thread(target=postTestServer, args=(
-        "update", json_rfile["number"], repo, data[repo][str(json_rfile["number"])
+        "update", json_rfile["number"], repo, data[repo][json_rfile["number"]
                                                          ]["download"]))
     send_payload.start()
     json_dump(data)
