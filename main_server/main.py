@@ -47,7 +47,7 @@ def postTestServer(event: str, number: str, repo: str, fileURL: str = "") -> Non
         testRequest["repo"] = repo
         len_cont = len(str(testRequest))
         testResp = http.request(
-            "POST", "wgrmur2iejm3iuat.myfritz.net:4433", fields=testRequest, headers={f"Content-Length: {len_cont}"})
+            "POST", "wgrmur2iejm3iuat.myfritz.net:25580", fields=testRequest, headers={f"Content-Length: {len_cont}"})
         time.sleep(5)
         if not testResp.status == 200:
             t = time.strftime("%H:%M:%S", time.localtime())
