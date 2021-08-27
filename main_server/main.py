@@ -72,14 +72,15 @@ def calc_digest(readfile, header, json_rfile, repo) -> None:
     if not h_digest == str(header["X-Hub-Signature-256"]):
         return
 
+    number = str(json_rfile["number"])
     # Check if PR exists in json
     if not repo in data:
         data[repo] = {}
-    if not str(json_rfile["number"]) in data[repo]:
-        data[repo][str(json_rfile["number"])] = {}
+    if not number in data[repo]:
+        data[repo][number] = {}
 
     # Setting the json and getting branch name
-    data[repo][str(json_rfile["number"])
+    data[repo][number
                ]["name"] = json_rfile["pull_request"]["title"]
     head_ref = json_rfile["pull_request"]["head"]["ref"]
 
@@ -100,10 +101,8 @@ def calc_digest(readfile, header, json_rfile, repo) -> None:
         except IndexError:
             print("No build avaiable! Retrying...")
             continue
-    data[repo][str(json_rfile["number"])
+    data[repo][number
                ]["download"] = f"https://ci.appveyor.com/api/buildjobs/{job_id}/artifacts/{filename}"
-    print(data)
-    print(repo)
     send_payload = th.Thread(target=postTestServer, args=(
         "update", json_rfile["number"], repo, data[repo][json_rfile["number"]
                                                          ]["download"]))
