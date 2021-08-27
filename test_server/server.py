@@ -29,13 +29,11 @@ class Requests(BaseHTTPRequestHandler):
             raise Exception("payload is no json")
         # check content
         if not set(("event", "prNumber", "repo", "modfile")) == set(req.keys()):
-            print(tuple(req.keys()))
             self.send_response(400, "Wrong json structure")
             raise Exception("Wrong json structure")
         if req["prNumber"] == "":
             self.send_response(400, "No pr_number given")
             raise Exception("No pr_number given")
-        print("Test1234")
 
         # do stuff
         if req["event"] == "update":
@@ -57,7 +55,6 @@ class Requests(BaseHTTPRequestHandler):
 
     def delete(self, req):
         self.ports.remove_port(f"{req['repo']}-{req['prNumber']}")
-        print("Test")
         x = threading.Thread(functions.delete_server(req['prNumber'],
                                                      req['repo']))
         x.start()

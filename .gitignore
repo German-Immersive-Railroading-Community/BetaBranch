@@ -128,3 +128,6 @@ dmypy.json
 */test.py
 # Pyre type checker
 .pyre/
+
+test_server/ports.json
+test_server/queue.json

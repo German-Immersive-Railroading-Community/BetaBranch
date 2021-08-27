@@ -4,6 +4,7 @@ import os
 import requests
 from decouple import config
 import json
+import re
 
 
 class ports:
@@ -65,13 +66,16 @@ def create_server(port, pr_number: str, mod, modfile):
             r.raw.decode_content = True
             shutil.copyfileobj(r.raw, f)
     # Edit config
+    content = ""
     with open(server_folder+"server.properties", "r") as conf:
-        content = conf.readlines()
-        content[29] = f"server-port={port}\n"
-        content[46] = f"motd={mod}-{pr_number}\n"
+        content = conf.read()
+        content = re.sub(r"server-port=\d{1,5}\n", f"server-port={port}\n",
+                         content)
+        content = re.sub(r"motd=.*\n",
+                         f"motd={mod}-{pr_number}\n",
+                         content)
     with open(server_folder+"server.properties", "w") as conf:
-        conf.writelines(content)
-        print("Test")
+        conf.write(content)
     os.system(
         f"screen -dmS {mod}-{pr_number} bash -c 'cd {server_folder};\
          ./auto-restart.sh'")
@@ -82,8 +86,3 @@ def delete_server(pr_number: str, mod: str):
     server_folder = config("server_folder")+f"{mod}-{pr_number}"
     os.system(f"screen -X -S {mod}-{pr_number} quit")
     shutil.rmtree(server_folder, ignore_errors=True)
-
-
-if __name__ == "__main__":
-    create_server(
-        10, "10", "GIRSignals", "https://github.com/German-Immersive-Railroading-Community/GIRSignals/releases/download/1.0.675/GIRSignals-1.0.675.jar")
