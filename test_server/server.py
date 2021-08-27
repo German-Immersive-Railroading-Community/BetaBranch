@@ -25,6 +25,7 @@ class Requests(BaseHTTPRequestHandler):
             _rfile = self.rfile.read(mess_len)
             req = json.loads(_rfile)
         except:
+            print(_rfile)
             self.send_response(400, "Wrong message")
             raise Exception("payload is no json")
         # check content
