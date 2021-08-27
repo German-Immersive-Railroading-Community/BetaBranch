@@ -102,6 +102,8 @@ def calc_digest(readfile, header, json_rfile, repo) -> None:
             continue
     data[repo][str(json_rfile["number"])
                ]["download"] = f"https://ci.appveyor.com/api/buildjobs/{job_id}/artifacts/{filename}"
+    print(data)
+    print(repo)
     send_payload = th.Thread(target=postTestServer, args=(
         "update", json_rfile["number"], repo, data[repo][json_rfile["number"]
                                                          ]["download"]))
