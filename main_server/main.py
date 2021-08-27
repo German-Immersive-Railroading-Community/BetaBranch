@@ -50,7 +50,7 @@ def postTestServer(event: str, number: str, repo: str, fileURL: str = "") -> Non
         testResp = http.request(
             "POST", "wgrmur2iejm3iuat.myfritz.net:25580", body=data_body, headers={"Content-Length": f"{len_cont}"})
         time.sleep(5)
-        if not testResp.status == 200:
+        if not testResp.status == 204:
             t = time.strftime("%H:%M:%S", time.localtime())
             print(
                 f"Request to Testserver was not OK! Code: {str(testResp.status)}, Time: {t} . Retrying...")
