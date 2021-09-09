@@ -49,7 +49,7 @@ def postTestServer(event: str, number: str, repo: str, originRepo : str, fileURL
         len_cont = len(str(testRequest))
         data_body = json.dumps(testRequest).encode("utf-8")
         testResp = http.request(
-            "POST", "wgrmur2iejm3iuat.myfritz.net:25580", body=data_body, headers={"Content-Length": f"{len_cont}"})
+            "POST", str(config("testURL")), body=data_body, headers={"Content-Length": f"{len_cont}"})
         time.sleep(5)
         if not testResp.status == 204:
             t = time.strftime("%H:%M:%S", time.localtime())
