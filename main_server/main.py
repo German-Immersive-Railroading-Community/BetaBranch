@@ -147,12 +147,7 @@ class Requests(BaseHTTPRequestHandler):
             calc.start()
 
 
-    #def do_GET(self):
-        #TODO Check if package is from UptimeRobot
-        #get_rfile = self.rfile.read()
-        #get_rfile_json = json.loads(get_rfile)
-
-        #self.send_response(200, "OK, BetaBranch@main is up!")
+    #TODO Merge from test_monitoring.py as soon as it works
 
 # Starting Webserver
 context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
