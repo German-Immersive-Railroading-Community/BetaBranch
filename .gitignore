@@ -131,3 +131,6 @@ dmypy.json
 
 test_server/ports.json
 test_server/queue.json
+
+# VS Code
+.vscode/

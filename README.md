@@ -10,6 +10,7 @@ priv_path=<path to privatekey.pem>
 full_path=<path to fullchain.pem>
 secret=<the secret from the webhook>
 json_file=<path to the folder of the beta.json>
+testURL=<test.server.domain:port>
 ```
 
 Test:

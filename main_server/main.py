@@ -10,6 +10,11 @@ import urllib3 as url
 from decouple import config
 
 
+#Making a List of IPs from UTR
+IPs = ()
+for ip in open('UTR_IPs.txt', 'r'):
+    IPs.append(str(ip))
+
 def implement(json, data):
     # I really don't know how, but it works... Ask Kontiko
     for key, value in json.items():
@@ -49,7 +54,7 @@ def postTestServer(event: str, number: str, repo: str, originRepo : str, fileURL
         len_cont = len(str(testRequest))
         data_body = json.dumps(testRequest).encode("utf-8")
         testResp = http.request(
-            "POST", "wgrmur2iejm3iuat.myfritz.net:25580", body=data_body, headers={"Content-Length": f"{len_cont}"})
+            "POST", str(config("testURL")), body=data_body, headers={"Content-Length": f"{len_cont}"})
         time.sleep(5)
         if not testResp.status == 204:
             t = time.strftime("%H:%M:%S", time.localtime())
@@ -146,6 +151,27 @@ class Requests(BaseHTTPRequestHandler):
                 _rfile, self.headers, json_rfile, repo, originRepo))
             calc.start()
 
+    #GET for UTR checks
+    def do_GET(self):
+        if str(self.client_address[0]) in IPs:
+            self.send_response(200, "OK, Test recieved!")
+            self.end_headers()
+            print("GET-Test received, sent 200")
+        else:
+            self.send_response(403, "Forbidden")
+            self.end_headers()
+            print("IP of Sender not found in List of IPs; 403")
+
+    #HEAD for UTR checks
+    def do_HEAD(self):
+        if str(self.client_address[0]) in IPs:
+            self.send_response(200, "OK, Test recieved!")
+            self.end_headers()
+            print("HEAD-Test received, sent 200")
+        else:
+            self.send_response(403, "Forbidden")
+            self.end_headers()
+            print("IP of Sender not found in List of IPs; 403")
 
 # Starting Webserver
 context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
