@@ -72,6 +72,28 @@ class Requests(BaseHTTPRequestHandler):
     def update_json(self):
         with open("queue.json", "w") as queue_file:
             json.dump(self.queue, queue_file)
+    
+    #GET for UTR checks
+    def do_GET(self):
+        self.useragent = self.headers.get("User-Agent")
+        match = re.search(r"(?:UptimeRobot)", self.useragent, flags=re.MULTILINE|re.IGNORECASE)
+        if match:
+            self.send_response(200, "OK, Test recieved!")
+            self.end_headers()
+            print("GET-Test received, sent 200")
+        else:
+            self.send_response(403, "Forbidden")
+
+    #HEAD for UTR checks
+    def do_HEAD(self):
+        self.useragent = self.headers.get("User-Agent")
+        match = re.search(r"(?:UptimeRobot)", self.useragent, flags=re.MULTILINE|re.IGNORECASE)
+        if match:
+            self.send_response(200, "OK, Test recieved!")
+            self.end_headers()
+            print("HEAD-Test received, sent 200")
+        else:
+            self.send_response(403, "Forbidden")
 
 
 httpd = HTTPServer(('0.0.0.0', 4433), Requests)
