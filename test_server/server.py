@@ -7,7 +7,7 @@ import functions
 import os
 
 #Making a List of IPs from UTR
-IPs = ()
+IPs = []
 for ip in open('UTR_IPs.txt', 'r'):
     IPs.append(str(ip))
 
