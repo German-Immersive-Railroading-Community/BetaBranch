@@ -15,6 +15,7 @@ class Requests(BaseHTTPRequestHandler):
         #match = re.search(r"(?:UptimeRobot)", self.useragent, flags=re.MULTILINE|re.IGNORECASE)
         #if match:
         self.send_response(200, "OK, Test recieved!")
+        self.end_headers()
         print("GET-Test received, sent 200")
         #else:
         #    self.send_response(403, "Forbidden")
@@ -24,6 +25,7 @@ class Requests(BaseHTTPRequestHandler):
         #match = re.search(r"(?:UptimeRobot)", self.useragent, flags=re.MULTILINE|re.IGNORECASE)
         #if match:
         self.send_response(200, "OK, Test recieved!")
+        self.end_headers()
         print("HEAD-Test received, sent 200")
         #else:
         #    self.send_response(403, "Forbidden")
