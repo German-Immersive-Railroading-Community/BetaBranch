@@ -9,7 +9,7 @@ import os
 #Making a List of IPs from UTR
 IPs = []
 for ip in open('UTR_IPs.txt', 'r'):
-    IPs.append(str(ip))
+    IPs.append(str(ip.replace('\n', '')))
 
 
 class Requests(BaseHTTPRequestHandler):
