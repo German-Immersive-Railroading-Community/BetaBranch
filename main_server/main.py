@@ -71,12 +71,14 @@ def postTestServer(event: str, number: str, repo: str, originRepo : str, fileURL
 def calc_digest(readfile, header, json_rfile, repo, originRepo) -> None:
     # Calculate hmac
     h_object = hmac.new(bytes(config("secret"), "utf8"), readfile, hl.sha256)
+    #TODO Put the next two into one line... Why did I do that??
     h_digest = str(h_object.hexdigest())
     h_digest = "sha256=" + h_digest
     # Check the hmac
     if not h_digest == str(header["X-Hub-Signature-256"]):
         return
 
+    #TODO Seperate the calc and the preparing for sending to Testserver so the 'closed' event can to be verified too
     number = str(json_rfile["number"])
     # Check if PR exists in json
     if not repo in data:
@@ -88,6 +90,7 @@ def calc_digest(readfile, header, json_rfile, repo, originRepo) -> None:
     data[repo][number
                ]["name"] = json_rfile["pull_request"]["title"]
     head_ref = json_rfile["pull_request"]["head"]["ref"]
+    #Sidenote: These variable names are terrible
 
     # getting the Artifact URL... Technically; adding that to the json
     ListEmpty = False
@@ -104,6 +107,7 @@ def calc_digest(readfile, header, json_rfile, repo, originRepo) -> None:
             filename = artifacts[0]["fileName"]
             ListEmpty = True
         except IndexError:
+            #TODO Typo
             print("No build avaiable! Retrying...")
             continue
     data[repo][number
@@ -131,6 +135,7 @@ class Requests(BaseHTTPRequestHandler):
         json_rfile = json.loads(_rfile)
         # Determine Repo
         originRepo = json_rfile["pull_request"]["head"]["repo"]["name"]
+        #TODO Replace 'str(...)' with 'str(originRepo)'
         repo = str(json_rfile["pull_request"]["head"]["repo"]["name"]).lower()
         # Check if closed or not
         if json_rfile["action"] == "closed":
@@ -181,3 +186,5 @@ context.load_verify_locations(config("full_path"))
 httpd = HTTPServer(('0.0.0.0', 4433), Requests)
 httpd.socket = context.wrap_socket(httpd.socket, server_side=True)
 httpd.serve_forever()
+
+#TODO Conclusion: A lot of changing and/or recoding
