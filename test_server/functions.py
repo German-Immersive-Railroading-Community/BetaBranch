@@ -57,7 +57,11 @@ def create_server(port, pr_number: str, mod, modfile):
     server_folder = config("server_folder")+f"{mod}-{pr_number}/"
     if os.path.isdir(server_folder):
         delete_server(pr_number, mod)
+    #TODO Why are we removing it again?
     shutil.rmtree(server_folder, ignore_errors=True)
+    #TODO We are always setting the server up again from scratch... That's not good; needs to be changed ->
+    # If folder exists: only update modfile and restart server
+    #else: create a new one
     shutil.copytree(config("server_files"),
                     server_folder)
     r = requests.get(modfile, stream=True)
@@ -74,6 +78,7 @@ def create_server(port, pr_number: str, mod, modfile):
         content = re.sub(r"motd=.*\n",
                          f"motd={mod}-{pr_number}\n",
                          content)
+    #TODO Why aren't we putting that into one open as r+?
     with open(server_folder+"server.properties", "w") as conf:
         conf.write(content)
     os.system(
@@ -84,5 +89,6 @@ def create_server(port, pr_number: str, mod, modfile):
 def delete_server(pr_number: str, mod: str):
     # Delete existing server
     server_folder = config("server_folder")+f"{mod}-{pr_number}"
+    #TODO This doesn't seem to work; working command: "screen -S {mod}-{pr_number} -X quit"
     os.system(f"screen -X -S {mod}-{pr_number} quit")
     shutil.rmtree(server_folder, ignore_errors=True)
