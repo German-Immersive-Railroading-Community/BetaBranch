@@ -55,7 +55,7 @@ class ports:
 def create_server(port, pr_number: str, mod, modfile):
     # Create or update a server with given pr_number and modfile
     server_folder = config("server_folder")+f"{mod}-{pr_number}/"
-    if os.file.isdir(server_folder):
+    if os.path.isdir(server_folder):
         os.system(f"screen -S {mod}-{pr_number} -X quit")
         os.remove(server_folder+"/mods/"+mod+".jar")
     else:
