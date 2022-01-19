@@ -3,20 +3,19 @@ import hmac
 import json
 import ssl
 import threading as th
-from http.server import BaseHTTPRequestHandler, HTTPServer
 import time
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import urllib3 as url
 from decouple import config
 
-
-#Making a List of IPs from UTR
+# Making a List of IPs from UTR
 IPs = []
 for ip in open('UTR_IPs.txt', 'r'):
     IPs.append(str(ip.replace('\n', '')))
 
+
 def implement(json, data):
-    # I really don't know how, but it works... Ask Kontiko
     for key, value in json.items():
         if type(value) == dict and key in data:
             data[key] = implement(value, data[key])
@@ -42,7 +41,7 @@ data = implement(beta_json, data)
 http = url.PoolManager()
 
 
-def postTestServer(event: str, number: str, repo: str, originRepo : str, fileURL: str = "") -> None:
+def postTestServer(event: str, number: str, repo: str, originRepo: str, fileURL: str = "") -> None:
     valid = False
     number = str(number)
     while not valid:
@@ -68,15 +67,25 @@ def postTestServer(event: str, number: str, repo: str, originRepo : str, fileURL
     json_dump(data)
 
 
-def calc_digest(readfile, header, json_rfile, repo, originRepo) -> None:
+def verify(readfile, header, event, entry_number, repo, originRepo) -> bool:
     # Calculate hmac
     h_object = hmac.new(bytes(config("secret"), "utf8"), readfile, hl.sha256)
-    h_digest = str(h_object.hexdigest())
-    h_digest = "sha256=" + h_digest
+    h_digest = "sha256=" + str(h_object.hexdigest())
     # Check the hmac
     if not h_digest == str(header["X-Hub-Signature-256"]):
-        return
+        return False
+    elif event == "other":
+        return True
+    elif event == "remove":
+        send_payload = th.Thread(target=postTestServer, args=(
+            "remove", entry_number, repo, originRepo))
+        send_payload.start()
+        return True
 
+
+def existing_new(readfile, header, json_rfile, repo, originRepo, entry_number) -> None:
+    if not verify(readfile, header, "other", entry_number, repo, originRepo):
+        return
     number = str(json_rfile["number"])
     # Check if PR exists in json
     if not repo in data:
@@ -88,6 +97,7 @@ def calc_digest(readfile, header, json_rfile, repo, originRepo) -> None:
     data[repo][number
                ]["name"] = json_rfile["pull_request"]["title"]
     head_ref = json_rfile["pull_request"]["head"]["ref"]
+    # Sidenote: These variable names are terrible
 
     # getting the Artifact URL... Technically; adding that to the json
     ListEmpty = False
@@ -104,13 +114,13 @@ def calc_digest(readfile, header, json_rfile, repo, originRepo) -> None:
             filename = artifacts[0]["fileName"]
             ListEmpty = True
         except IndexError:
-            print("No build avaiable! Retrying...")
+            print("No build available! Retrying...")
             continue
     data[repo][number
                ]["download"] = f"https://ci.appveyor.com/api/buildjobs/{job_id}/artifacts/{filename}"
     send_payload = th.Thread(target=postTestServer, args=(
         "update", number, repo, originRepo, data[repo][number
-                                                         ]["download"]))
+                                                       ]["download"]))
     send_payload.start()
     json_dump(data)
 
@@ -131,13 +141,12 @@ class Requests(BaseHTTPRequestHandler):
         json_rfile = json.loads(_rfile)
         # Determine Repo
         originRepo = json_rfile["pull_request"]["head"]["repo"]["name"]
-        repo = str(json_rfile["pull_request"]["head"]["repo"]["name"]).lower()
+        repo = str(originRepo).lower()
+        entry_number = str(json_rfile["number"])
         # Check if closed or not
         if json_rfile["action"] == "closed":
-            entry_number = str(json_rfile["number"])
-            send_payload = th.Thread(target=postTestServer, args=(
-                "remove", entry_number, repo, originRepo))
-            send_payload.start()
+            verify(_rfile, self.headers, "remove",
+                   entry_number, repo, originRepo)
             try:
                 del data[repo][entry_number]
             except KeyError:
@@ -147,11 +156,11 @@ class Requests(BaseHTTPRequestHandler):
             json_dump(data)
         # start the magic
         else:
-            calc = th.Thread(target=calc_digest, args=(
-                _rfile, self.headers, json_rfile, repo, originRepo))
-            calc.start()
+            existing_new_thread = th.Thread(target=existing_new, args=(
+                _rfile, self.headers, json_rfile, repo, originRepo, entry_number))
+            existing_new_thread.start()
 
-    #GET for UTR checks
+    # GET for UTR checks
     def do_GET(self):
         if str(self.client_address[0]) in IPs:
             self.send_response(200, "OK, Test recieved!")
@@ -162,7 +171,7 @@ class Requests(BaseHTTPRequestHandler):
             self.end_headers()
             print("IP of Sender not found in List of IPs; 403")
 
-    #HEAD for UTR checks
+    # HEAD for UTR checks
     def do_HEAD(self):
         if str(self.client_address[0]) in IPs:
             self.send_response(200, "OK, Test recieved!")
@@ -172,6 +181,7 @@ class Requests(BaseHTTPRequestHandler):
             self.send_response(403, "Forbidden")
             self.end_headers()
             print("IP of Sender not found in List of IPs; 403")
+
 
 # Starting Webserver
 context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
