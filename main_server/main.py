@@ -132,9 +132,9 @@ class Requests(BaseHTTPRequestHandler):
         # Determine Repo
         originRepo = json_rfile["pull_request"]["head"]["repo"]["name"]
         repo = str(json_rfile["pull_request"]["head"]["repo"]["name"]).lower()
+        entry_number = str(json_rfile["number"])
         # Check if closed or not
         if json_rfile["action"] == "closed":
-            entry_number = str(json_rfile["number"])
             send_payload = th.Thread(target=postTestServer, args=(
                 "remove", entry_number, repo, originRepo))
             send_payload.start()
