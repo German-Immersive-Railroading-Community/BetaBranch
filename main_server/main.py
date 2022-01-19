@@ -142,9 +142,9 @@ class Requests(BaseHTTPRequestHandler):
         # Determine Repo
         originRepo = json_rfile["pull_request"]["head"]["repo"]["name"]
         repo = str(originRepo).lower()
+        entry_number = str(json_rfile["number"])
         # Check if closed or not
         if json_rfile["action"] == "closed":
-            entry_number = str(json_rfile["number"])
             verify(_rfile, self.headers, "remove",
                    entry_number, repo, originRepo)
             try:
