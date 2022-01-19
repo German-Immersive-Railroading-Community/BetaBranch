@@ -16,7 +16,6 @@ for ip in open('UTR_IPs.txt', 'r'):
 
 
 def implement(json, data):
-    # I really don't know how, but it works... Ask Kontiko
     for key, value in json.items():
         if type(value) == dict and key in data:
             data[key] = implement(value, data[key])
