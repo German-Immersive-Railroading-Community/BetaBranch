@@ -1,15 +1,28 @@
 #!/usr/bin/env python3
-from http.server import HTTPServer, BaseHTTPRequestHandler
-
 import json
-import threading
-import functions
+import logging as lg
 import os
+import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
-#Making a List of IPs from UTR
+import functions
+
+today = dt.today().strftime('%Y-%m-%d')
+logname = f'../logs/{today}.log'
+if not os.path.exists('../logs/'):
+    os.mkdir('../logs/')
+open(logname, 'a').close()
+log_level = str(config('log_level')).upper()
+lg.basicConfig(filename=logname, level=log_level,
+               format='%(asctime)s : %(message)s', datefmt='%I:%M:%S')
+
+lg.info("Starting up")
+
+# Making a List of IPs from UTR
 IPs = []
 for ip in open('UTR_IPs.txt', 'r'):
     IPs.append(str(ip.replace('\n', '')))
+lg.debug("Made list of IPs from UTR")
 
 
 class Requests(BaseHTTPRequestHandler):
@@ -21,6 +34,7 @@ class Requests(BaseHTTPRequestHandler):
         if os.path.isfile("queue.json"):
             with open("queue.json", "r") as queue_file:
                 self.queue = json.load(queue_file)
+                lg.debug("Loaded queue.json")
         super().__init__(request, client_addr, server)
 
     def do_POST(self):
@@ -29,17 +43,18 @@ class Requests(BaseHTTPRequestHandler):
             mess_len = int(self.headers.get("Content-Length"))
             _rfile = self.rfile.read(mess_len)
             req = json.loads(_rfile)
+            lg.info("Got POST-payload, processing")
         except:
-            print(_rfile)
+            lg.exception(
+                f"An exception happened during the processing (probably because the payload was not from mainserver).\nBody:\n{_rfile}")
             self.send_response(400, "Wrong message")
-            raise Exception("payload is no json")
         # check content
         if not set(("event", "prNumber", "repo", "modFile")) == set(req.keys()):
+            lg.warning("Wrong json structure, sending 400")
             self.send_response(400, "Wrong json structure")
-            raise Exception("Wrong json structure")
         if req["prNumber"] == "":
+            lg.warning("No PR-Number given, sending 400")
             self.send_response(400, "No pr_number given")
-            raise Exception("No pr_number given")
 
         # do stuff
         port = ""
@@ -53,11 +68,14 @@ class Requests(BaseHTTPRequestHandler):
 
     def update(self, req):
         if self.ports.is_port_avail():
+            lg.info("Found available port")
             port = self.ports.get_port(f"{req['repo']}-{req['prNumber']}")
             x = threading.Thread(target=functions.create_server, args=(
                 port, req['prNumber'], req['repo'], req['modFile']))
             x.start()
+            lg.info("Started thread for creating of server")
         else:
+            lg.info("No port available, adding to queue")
             self.queue.append(req)
             self.update_json()
         return port
@@ -67,38 +85,41 @@ class Requests(BaseHTTPRequestHandler):
         x = threading.Thread(functions.delete_server(req['prNumber'],
                                                      req['repo']))
         x.start()
+        lg.info("Started thread to delete server")
         self.update_queue()
 
     def update_queue(self):
         if len(self.queue) > 0:
             self.update(self.queue.pop(0))
             self.update_json()
+            lg.debug("Updated queue")
 
     def update_json(self):
         with open("queue.json", "w") as queue_file:
             json.dump(self.queue, queue_file)
-    
-    #GET for UTR checks
+            lg.debug("Updated json")
+
+    # GET for UTR checks
     def do_GET(self):
         if str(self.client_address[0]) in IPs:
             self.send_response(200, "OK, Test recieved!")
             self.end_headers()
-            print("GET-Test received, sent 200")
+            lg.info("GET-Test received, sent 200")
         else:
             self.send_response(403, "Forbidden")
             self.end_headers()
-            print("IP of Sender not found in List of IPs; 403")
+            lg.info("GET - IP of Sender not found in List of IPs; 403")
 
-    #HEAD for UTR checks
+    # HEAD for UTR checks
     def do_HEAD(self):
         if str(self.client_address[0]) in IPs:
             self.send_response(200, "OK, Test recieved!")
             self.end_headers()
-            print("HEAD-Test received, sent 200")
+            lg.info("HEAD-Test received, sent 200")
         else:
             self.send_response(403, "Forbidden")
             self.end_headers()
-            print("IP of Sender not found in List of IPs; 403")
+            lg.info("HEAD - IP of Sender not found in List of IPs; 403")
 
 
 httpd = HTTPServer(('0.0.0.0', 4433), Requests)
