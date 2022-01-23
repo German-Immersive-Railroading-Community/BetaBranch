@@ -6,6 +6,7 @@ import threading
 from datetime import datetime as dt
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
+from decouple import config
 import functions
 
 today = dt.today().strftime('%Y-%m-%d')
