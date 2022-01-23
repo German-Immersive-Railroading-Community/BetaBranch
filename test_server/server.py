@@ -8,9 +8,10 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import functions
 
 today = dt.today().strftime('%Y-%m-%d')
-logname = f'../logs/{today}.log'
-if not os.path.exists('../logs/'):
-    os.mkdir('../logs/')
+logdir = str(config("logDir"))
+logname = f'{logdir}/{today}.log'
+if not os.path.exists(logdir):
+    os.mkdir(logdir)
 open(logname, 'a').close()
 log_level = str(config('log_level')).upper()
 lg.basicConfig(filename=logname, level=log_level,
