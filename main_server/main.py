@@ -175,8 +175,11 @@ class Requests(BaseHTTPRequestHandler):
         lg.debug("Got POST-request, processed")
         _rfile = self.rfile.read()
         json_rfile = json.loads(_rfile)
+        actions = str(config('gh-actions')).split(",")
         # Determine Repo
         try:
+            if not json_rfile["action"] in actions:
+                return
             originRepo = json_rfile["pull_request"]["head"]["repo"]["name"]
             repo = str(originRepo).lower()
             entry_number = str(json_rfile["number"])

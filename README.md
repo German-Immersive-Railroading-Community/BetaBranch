@@ -13,6 +13,7 @@ json_file=<path to the folder of the beta.json>
 testURL=<test.server.domain:port>
 log_level=<DEBUG, INFO, ...>
 logDir=<directory in which the logs should be saved>
+gh-actions=<list of the actions of PRs which should be processed (opened, closed, ...)>
 ```
 
 Test:
