@@ -9,6 +9,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from decouple import config
 
 import functions
+from test_server.functions import ports
 
 today = dt.today().strftime('%Y-%m-%d')
 logdir = str(config("logDir"))
@@ -50,6 +51,8 @@ class Requests(BaseHTTPRequestHandler):
                 self.queue = json.load(queue_file)
                 lg.debug("Loaded queue.json")
         super().__init__(request, client_addr, server)
+        while ports.is_port_avail() and len(self.queue) > 0:
+            self.update_queue()
 
     def do_POST(self):
         try:
