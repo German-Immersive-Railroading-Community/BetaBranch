@@ -13,11 +13,11 @@ class ports:
 
     def __init__(self):
         self.avail_ports = list(
-            range(int(config("min_port")), int(config("max_port"))))
+            range(int(config("min_port")), int(config("max_port"))+1))
         self.server_ports = {}
         if os.path.isfile("ports.json"):
             self.avail_ports = list(
-                range(int(config("min_port")), int(config("max_port"))))
+                range(int(config("min_port")), int(config("max_port"))+1))
             self.server_ports = {}
             with open("ports.json", "r") as file:
                 data = json.load(file)
@@ -45,10 +45,12 @@ class ports:
 
     def get_port(self, pr_identifier):
         if self.has_port(pr_identifier):
-            lg.debug(f"{pr_identifier}: Found port of {pr_identifier}, returning that")
+            lg.debug(
+                f"{pr_identifier}: Found port of {pr_identifier}, returning that")
             return self.server_ports[pr_identifier]
         else:
-            lg.debug(f"{pr_identifier}: No port existing for {pr_identifier}, assigning new")
+            lg.debug(
+                f"{pr_identifier}: No port existing for {pr_identifier}, assigning new")
             return self.assign_port(pr_identifier)
 
     def update_json(self):

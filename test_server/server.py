@@ -7,6 +7,7 @@ from datetime import datetime as dt
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 from decouple import config
+
 import functions
 
 today = dt.today().strftime('%Y-%m-%d')
@@ -26,6 +27,16 @@ IPs = []
 for ip in open('UTR_IPs.txt', 'r'):
     IPs.append(str(ip.replace('\n', '')))
 lg.debug("Made list of IPs from UTR")
+
+# Start the existing servers
+with open("ports.json", "r") as file:
+    data = json.load(file)
+server_folder = config("server_folder")
+for identifier in data["server_ports"].keys():
+    os.system(
+        f"screen -dmS {identifier} bash -c 'cd {server_folder}/{identifier};\
+         ./auto-restart.sh'")
+lg.info("Started the existing servers")
 
 
 class Requests(BaseHTTPRequestHandler):
