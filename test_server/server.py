@@ -76,7 +76,7 @@ class Requests(BaseHTTPRequestHandler):
             x = threading.Thread(target=functions.create_server, args=(
                 port, req['prNumber'], req['repo'], req['modFile']))
             x.start()
-            lg.info("Started thread for creating of server")
+            lg.info(f"{req['repo']} ({req['prNUmber']}): Started thread for creating of server")
         else:
             lg.info("No port available, adding to queue")
             self.queue.append(req)
@@ -88,7 +88,7 @@ class Requests(BaseHTTPRequestHandler):
         x = threading.Thread(functions.delete_server(req['prNumber'],
                                                      req['repo']))
         x.start()
-        lg.info("Started thread to delete server")
+        lg.info(f"{req['repo']} ({req['prNUmber']}): Started thread to delete server")
         self.update_queue()
 
     def update_queue(self):

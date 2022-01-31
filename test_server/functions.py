@@ -32,23 +32,23 @@ class ports:
         port = self.avail_ports.pop(0)
         self.server_ports[pr_identifier] = port
         self.update_json()
-        lg.debug(f"Assigned port {port}")
+        lg.debug(f"{pr_identifier}: Assigned port {port}")
         return port
 
     def remove_port(self, pr_identifier):
         self.avail_ports.append(self.server_ports.pop(pr_identifier))
         self.update_json()
-        lg.debug(f"Removed port of {pr_identifier}")
+        lg.debug(f"{pr_identifier}: Removed port of {pr_identifier}")
 
     def has_port(self, pr_identifier):
         return pr_identifier in self.server_ports.keys()
 
     def get_port(self, pr_identifier):
         if self.has_port(pr_identifier):
-            lg.debug(f"Found port of {pr_identifier}, returning that")
+            lg.debug(f"{pr_identifier}: Found port of {pr_identifier}, returning that")
             return self.server_ports[pr_identifier]
         else:
-            lg.debug(f"No port existing for {pr_identifier}, assigning new")
+            lg.debug(f"{pr_identifier}: No port existing for {pr_identifier}, assigning new")
             return self.assign_port(pr_identifier)
 
     def update_json(self):
@@ -61,31 +61,31 @@ class ports:
 
 
 def create_server(port, pr_number: str, mod, modfile):
-    lg.info(f"Starting to create/update server of ")
+    lg.info(f"{mod} ({pr_number}): Starting to create/update server")
     # Create or update a server with given pr_number and modfile
     server_folder = config("server_folder")+f"{mod}-{pr_number}/"
     if os.path.isdir(server_folder):
-        lg.info(f"Serverfiles for {mod} ({pr_number}) found, updating mod")
+        lg.info(f"{mod} ({pr_number}): Serverfiles found, updating mod")
         os.system(f"screen -S {mod}-{pr_number} -X quit")
-        lg.debug(f"Stopping screen of {mod}-{pr_number}")
+        lg.debug(f"{mod} ({pr_number}): Stopping screen")
         os.remove(server_folder+"/mods/"+mod+".jar")
-        lg.debug("Removed mod")
+        lg.debug(f"{mod} ({pr_number}): Removed mod")
     else:
-        lg.info(f"No serverfiles found for {mod} ({pr_number}), creating new")
+        lg.info(f"{mod} ({pr_number}): No serverfiles found, creating new")
         shutil.copytree(config("server_files"),
                         server_folder)
-        lg.debug(f"Created serverfiles for {mod}-{pr_number})")
+        lg.debug(f"{mod} ({pr_number}): Created serverfiles")
     r = requests.get(modfile, stream=True)
-    lg.debug("Requested modfile")
+    lg.debug(f"{mod} ({pr_number}): Requested modfile")
     if r.status_code == 200:
         with open(server_folder+"/mods/"+mod+".jar", 'a+b') as f:
             r.raw.decode_content = True
             shutil.copyfileobj(r.raw, f)
-            lg.info("Copied modfile")
+            lg.info(f"{mod} ({pr_number}): Copied modfile")
     # Edit config
     content = ""
     with open(server_folder+"server.properties", "r+") as conf:
-        lg.debug("Starting to edit config")
+        lg.debug(f"{mod} ({pr_number}): Starting to edit config")
         content = conf.read()
         content = re.sub(r"server-port=\d{1,5}\n", f"server-port={port}\n",
                          content)
@@ -93,18 +93,18 @@ def create_server(port, pr_number: str, mod, modfile):
                          f"motd={mod}-{pr_number}\n",
                          content)
         conf.write(content)
-        lg.info("Edited config")
+        lg.info(f"{mod} ({pr_number}): Edited config")
     os.system(
         f"screen -dmS {mod}-{pr_number} bash -c 'cd {server_folder};\
          ./auto-restart.sh'")
-    lg.info("Started Screen/Server")
+    lg.info(f"{mod} ({pr_number}): Started Screen/Server")
 
 
 def delete_server(pr_number: str, mod: str):
     # Delete existing server
-    lg.debug(f"Deleting server of {mod} ({pr_number})")
+    lg.debug(f"{mod} ({pr_number}): Deleting server...")
     server_folder = config("server_folder")+f"{mod}-{pr_number}"
     os.system(f"screen -S {mod}-{pr_number} -X quit")
-    lg.debug(f"Stopped server of {mod}-{pr_number}")
+    lg.debug(f"{mod} ({pr_number}): Stopped server")
     shutil.rmtree(server_folder, ignore_errors=True)
-    lg.info(f"Deleted server for {mod} ({pr_number})")
+    lg.info(f"{mod} ({pr_number}): Deleted server")
