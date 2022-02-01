@@ -26,7 +26,7 @@ class ports:
                         self.avail_ports.remove(port)
                 self.server_ports = data["server_ports"]
                 lg.debug("Loaded ports")
-            print(self.avail_ports)
+            lg.info(self.avail_ports)
             self.update_json()
 
     def is_port_avail(self):
