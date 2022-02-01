@@ -37,7 +37,7 @@ class ports:
     def remove_port(self, pr_identifier):
         self.avail_ports.append(self.server_ports.pop(pr_identifier))
         self.update_json()
-        lg.debug(f"{pr_identifier}: Removed port of {pr_identifier}")
+        lg.debug(f"{pr_identifier}: Removed port")
 
     def has_port(self, pr_identifier):
         return pr_identifier in self.server_ports.keys()
@@ -45,11 +45,11 @@ class ports:
     def get_port(self, pr_identifier):
         if self.has_port(pr_identifier):
             lg.debug(
-                f"{pr_identifier}: Found port of {pr_identifier}, returning that")
+                f"{pr_identifier}: Found port, returning that")
             return self.server_ports[pr_identifier]
         else:
             lg.debug(
-                f"{pr_identifier}: No port existing for {pr_identifier}, assigning new")
+                f"{pr_identifier}: No port existing, assigning new")
             return self.assign_port(pr_identifier)
 
     def update_json(self):
