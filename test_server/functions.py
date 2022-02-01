@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import json
 import logging as lg
 import os
@@ -16,17 +15,14 @@ class ports:
             range(int(config("min_port")), int(config("max_port"))+1))
         self.server_ports = {}
         if os.path.isfile("ports.json"):
-            self.avail_ports = list(
-                range(int(config("min_port")), int(config("max_port"))+1))
-            self.server_ports = {}
             with open("ports.json", "r") as file:
                 data = json.load(file)
                 for port in self.avail_ports:
-                    if port in data["ports"]:
+                    if port in data["server_ports"].values():
                         self.avail_ports.remove(port)
                 self.server_ports = data["server_ports"]
                 lg.debug("Loaded ports")
-            self.update_json()
+        self.update_json()
 
     def is_port_avail(self):
         return not len(self.avail_ports) == 0
