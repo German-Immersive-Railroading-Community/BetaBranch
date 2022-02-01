@@ -21,9 +21,12 @@ class ports:
             self.server_ports = {}
             with open("ports.json", "r") as file:
                 data = json.load(file)
-                self.avail_ports = data["ports"]
+                for port in self.avail_ports:
+                    if port in data["ports"]:
+                        self.avail_ports.remove(port)
                 self.server_ports = data["server_ports"]
                 lg.debug("Loaded ports")
+            self.update_json()
 
     def is_port_avail(self):
         return not len(self.avail_ports) == 0
