@@ -107,8 +107,10 @@ class Requests(BaseHTTPRequestHandler):
         self.update_queue()
 
     def update_queue(self):
-        if len(self.queue) > 0:
-            self.update(self.queue.pop(0))
+        if len(self.queue) > 0 and self.ports.is_port_avail():
+            nextPR = self.queue.pop(0)
+            self.update(nextPR)
+            self.queue.remove(nextPR)
             self.update_json()
             lg.debug("Updated queue")
 
