@@ -34,6 +34,7 @@ with open("ports.json", "r") as file:
     data = json.load(file)
 server_folder = config("server_folder")
 for identifier in data["server_ports"].keys():
+    os.system(f"screen -S {identifier} -X quit")
     os.system(
         f"screen -dmS {identifier} bash -c 'cd {server_folder}/{identifier};\
          ./auto-restart.sh'")
