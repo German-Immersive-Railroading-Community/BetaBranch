@@ -91,7 +91,7 @@ class Requests(BaseHTTPRequestHandler):
             x = threading.Thread(target=functions.create_server, args=(
                 port, req['prNumber'], req['repo'], req['modFile']))
             x.start()
-            lg.info(f"{req['repo']} ({req['prNUmber']}): Started thread for creating of server")
+            lg.info(f"{req['repo']} ({req['prNumber']}): Started thread for creating of server")
         else:
             lg.info("No port available, adding to queue")
             self.queue.append(req)
