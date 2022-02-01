@@ -51,7 +51,7 @@ class Requests(BaseHTTPRequestHandler):
                 self.queue = json.load(queue_file)
                 lg.debug("Loaded queue.json")
         super().__init__(request, client_addr, server)
-        while self.ports.is_port_avail() and len(self.queue) > 0:
+        while (len(self.ports.avail_ports) > 0 and len(self.queue) > 0):
             self.update_queue()
 
     def do_POST(self):
