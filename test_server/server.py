@@ -50,8 +50,8 @@ class Requests(BaseHTTPRequestHandler):
             with open("queue.json", "r") as queue_file:
                 self.queue = json.load(queue_file)
                 lg.debug("Loaded queue.json")
-        while (len(self.ports.avail_ports) > 0 and len(self.queue) > 0):
-            self.update_queue()
+        #while (len(self.ports.avail_ports) > 0 and len(self.queue) > 0):
+        #    self.update_queue()
         super().__init__(request, client_addr, server)
         
 
