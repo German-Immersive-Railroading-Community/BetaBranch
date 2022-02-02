@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import json
 import logging as lg
 import os
@@ -13,17 +12,17 @@ class ports:
 
     def __init__(self):
         self.avail_ports = list(
-            range(int(config("min_port")), int(config("max_port"))))
+            range(int(config("min_port")), int(config("max_port"))+1))
         self.server_ports = {}
         if os.path.isfile("ports.json"):
-            self.avail_ports = list(
-                range(int(config("min_port")), int(config("max_port"))))
-            self.server_ports = {}
             with open("ports.json", "r") as file:
                 data = json.load(file)
-                self.avail_ports = data["ports"]
+                for port in self.avail_ports:
+                    if port in data["server_ports"].values():
+                        self.avail_ports.remove(port)
                 self.server_ports = data["server_ports"]
                 lg.debug("Loaded ports")
+        self.update_json()
 
     def is_port_avail(self):
         return not len(self.avail_ports) == 0
@@ -38,17 +37,19 @@ class ports:
     def remove_port(self, pr_identifier):
         self.avail_ports.append(self.server_ports.pop(pr_identifier))
         self.update_json()
-        lg.debug(f"{pr_identifier}: Removed port of {pr_identifier}")
+        lg.debug(f"{pr_identifier}: Removed port")
 
     def has_port(self, pr_identifier):
         return pr_identifier in self.server_ports.keys()
 
     def get_port(self, pr_identifier):
         if self.has_port(pr_identifier):
-            lg.debug(f"{pr_identifier}: Found port of {pr_identifier}, returning that")
+            lg.debug(
+                f"{pr_identifier}: Found port, returning that")
             return self.server_ports[pr_identifier]
         else:
-            lg.debug(f"{pr_identifier}: No port existing for {pr_identifier}, assigning new")
+            lg.debug(
+                f"{pr_identifier}: No port existing, assigning new")
             return self.assign_port(pr_identifier)
 
     def update_json(self):

@@ -7,6 +7,7 @@ from datetime import datetime as dt
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 from decouple import config
+
 import functions
 
 today = dt.today().strftime('%Y-%m-%d')
@@ -27,6 +28,17 @@ for ip in open('UTR_IPs.txt', 'r'):
     IPs.append(str(ip.replace('\n', '')))
 lg.debug("Made list of IPs from UTR")
 
+# Start the existing servers
+with open("ports.json", "r") as file:
+    data = json.load(file)
+server_folder = config("server_folder")
+for identifier in data["server_ports"].keys():
+    os.system(f"screen -S {identifier} -X quit")
+    os.system(
+        f"screen -dmS {identifier} bash -c 'cd {server_folder}/{identifier};\
+         ./auto-restart.sh'")
+lg.info("Started the existing servers")
+
 
 class Requests(BaseHTTPRequestHandler):
 
@@ -34,11 +46,9 @@ class Requests(BaseHTTPRequestHandler):
     queue = []
 
     def __init__(self, request, client_addr, server):
-        if os.path.isfile("queue.json"):
-            with open("queue.json", "r") as queue_file:
-                self.queue = json.load(queue_file)
-                lg.debug("Loaded queue.json")
+        self.initialize_queue()
         super().__init__(request, client_addr, server)
+        
 
     def do_POST(self):
         try:
@@ -76,7 +86,7 @@ class Requests(BaseHTTPRequestHandler):
             x = threading.Thread(target=functions.create_server, args=(
                 port, req['prNumber'], req['repo'], req['modFile']))
             x.start()
-            lg.info(f"{req['repo']} ({req['prNUmber']}): Started thread for creating of server")
+            lg.info(f"{req['repo']} ({req['prNumber']}): Started thread for creating of server")
         else:
             lg.info("No port available, adding to queue")
             self.queue.append(req)
@@ -92,7 +102,7 @@ class Requests(BaseHTTPRequestHandler):
         self.update_queue()
 
     def update_queue(self):
-        if len(self.queue) > 0:
+        if len(self.queue) > 0 and self.ports.is_port_avail():
             self.update(self.queue.pop(0))
             self.update_json()
             lg.debug("Updated queue")
@@ -101,6 +111,24 @@ class Requests(BaseHTTPRequestHandler):
         with open("queue.json", "w") as queue_file:
             json.dump(self.queue, queue_file)
             lg.debug("Updated json")
+
+    def initialize_queue(self):
+        """Loads the queue file and looks if it can process some entrys of it"""
+        if os.path.isfile("queue.json"):
+            with open("queue.json", "r") as queue_file:
+                self.queue = json.load(queue_file)
+                lg.debug("Loaded queue.json")
+                lg.debug("Starting to process the queue")
+                for queued_entry in self.queue:
+                    lg.debug(f"Current queued entry: {queued_entry}")
+                    if self.ports.is_port_avail():
+                        self.update_queue()
+                    else:
+                        lg.debug("Not port available, stopping processing of queue")
+                        break
+        else:
+            open("queue.json", "a").close()
+            self.queue = []
 
     # GET for UTR checks
     def do_GET(self):
