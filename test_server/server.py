@@ -46,12 +46,7 @@ class Requests(BaseHTTPRequestHandler):
     queue = []
 
     def __init__(self, request, client_addr, server):
-        if os.path.isfile("queue.json"):
-            with open("queue.json", "r") as queue_file:
-                self.queue = json.load(queue_file)
-                lg.debug("Loaded queue.json")
-        #while (len(self.ports.avail_ports) > 0 and len(self.queue) > 0):
-        #    self.update_queue()
+        self.initialize_queue()
         super().__init__(request, client_addr, server)
         
 
@@ -116,6 +111,24 @@ class Requests(BaseHTTPRequestHandler):
         with open("queue.json", "w") as queue_file:
             json.dump(self.queue, queue_file)
             lg.debug("Updated json")
+
+    def initialize_queue(self):
+        """Loads the queue file and looks if it can process some entrys of it"""
+        if os.path.isfile("queue.json"):
+            with open("queue.json", "r") as queue_file:
+                self.queue = json.load(queue_file)
+                lg.debug("Loaded queue.json")
+                lg.debug("Starting to process the queue")
+                for queued_entry in self.queue:
+                    lg.debug(f"Current queued entry: {queued_entry}")
+                    if self.ports.is_port_avail():
+                        self.update_queue()
+                    else:
+                        lg.debug("Not port available, stopping processing of queue")
+                        break
+        else:
+            open("queue.json", "a").close()
+            self.queue = []
 
     # GET for UTR checks
     def do_GET(self):
