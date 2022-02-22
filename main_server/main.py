@@ -186,15 +186,15 @@ class Requests(BaseHTTPRequestHandler):
             # Check if closed or not
             if json_rfile["action"] == "closed":
                 lg.info("Detected that the action is 'closed'")
-                verify(_rfile, self.headers, "remove",
-                       entry_number, repo, originRepo)
-                try:
-                    del data[repo][entry_number]
-                    lg.info(f"Deleted the entry ({entry_number}).")
-                except KeyError:
-                    lg.warning(
-                        f"There was an error deleting an entry! Repo: {repo}, Entry: {entry_number}.")
-                json_dump(data)
+                if verify(_rfile, self.headers, "remove",
+                          entry_number, repo, originRepo):
+                    try:
+                        del data[repo][entry_number]
+                        lg.info(f"Deleted the entry ({entry_number}).")
+                    except KeyError:
+                        lg.warning(
+                            f"There was an error deleting an entry! Repo: {repo}, Entry: {entry_number}.")
+                    json_dump(data)
             # start the magic
             else:
                 existing_new_thread = th.Thread(target=existing_new, args=(
