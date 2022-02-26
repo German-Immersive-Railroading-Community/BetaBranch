@@ -124,7 +124,7 @@ class Requests(BaseHTTPRequestHandler):
                     if self.ports.is_port_avail():
                         self.update_queue()
                     else:
-                        lg.debug("Not port available, stopping processing of queue")
+                        lg.debug("No port available, stopping processing of queue")
                         break
         else:
             open("queue.json", "a").close()
@@ -154,5 +154,4 @@ class Requests(BaseHTTPRequestHandler):
 
 
 httpd = HTTPServer(('0.0.0.0', 4433), Requests)
-# httpd.socket = context.wrap_socket(httpd.socket, server_side=True)
 httpd.serve_forever()
