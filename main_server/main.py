@@ -3,6 +3,7 @@ import hmac
 import json
 import logging as lg
 import os
+import re
 import ssl
 import threading as th
 import time
@@ -61,7 +62,8 @@ with open(json_file, "r+") as _file:
 data = implement(beta_json, data)
 
 
-def postTestServer(event: str, number: str, repo: str, originRepo: str, fileURL: str = "") -> None:
+def postTestServer(event: str, number: str, repo: str, originRepo: str, mc_version : str = "", fileURL: str = "") -> None:
+    """Sends a POST-Request to the testserver"""
     lg.info("Started to send payload to testserver")
     valid = False
     number = str(number)
@@ -71,6 +73,7 @@ def postTestServer(event: str, number: str, repo: str, originRepo: str, fileURL:
         testRequest["prNumber"] = number
         testRequest["modFile"] = fileURL
         testRequest["repo"] = originRepo
+        testRequest["mc_version"] = mc_version
         len_cont = len(str(testRequest))
         data_body = json.dumps(testRequest).encode("utf-8")
         lg.info("Set up payload body, proceeding to sending")
@@ -91,6 +94,7 @@ def postTestServer(event: str, number: str, repo: str, originRepo: str, fileURL:
 
 
 def verify(readfile, header, event, entry_number, repo, originRepo) -> bool:
+    """A function to verify a request"""
     # Calculate hmac
     h_object = hmac.new(bytes(config("secret"), "utf8"), readfile, hl.sha256)
     h_digest = "sha256=" + str(h_object.hexdigest())
@@ -111,6 +115,7 @@ def verify(readfile, header, event, entry_number, repo, originRepo) -> bool:
 
 
 def existing_new(readfile, header, json_rfile, repo, originRepo, entry_number) -> None:
+    """The function that prepares everything for updating or creating a server"""
     if not verify(readfile, header, "other", entry_number, repo, originRepo):
         return
     number = str(json_rfile["number"])
@@ -125,6 +130,20 @@ def existing_new(readfile, header, json_rfile, repo, originRepo, entry_number) -
                ]["name"] = json_rfile["pull_request"]["title"]
     head_ref = json_rfile["pull_request"]["head"]["ref"]
     # Sidenote: These variable names are terrible
+
+    mc_version = "1122"
+    lg.debug(f"Set mc_version to {mc_version}")
+    version_pattern = re.compile(r"\s*(1\.1[2-8](\.[1-9])?)\s*", flags= re.MULTILINE)
+    version_match = version_pattern.search(head_ref)
+    if version_match:
+        mc_version = str(version_match.group(0)).replace(".", "")
+        lg.info(f"Found mc-version {mc_version}")
+    else:
+        lg.debug("No match found in head-ref, trying to find in base-ref")
+        version_match = version_pattern.search(json_rfile["base"]["ref"])
+        if version_match:
+            mc_version = str(version_match.group(0)).replace(".", "")
+            lg.info(f"Found mc-version {mc_version} in base-ref")
 
     # getting the Artifact URL... Technically; adding that to the json
     ListEmpty = False
@@ -154,7 +173,7 @@ def existing_new(readfile, header, json_rfile, repo, originRepo, entry_number) -
                ]["download"] = f"https://ci.appveyor.com/api/buildjobs/{job_id}/artifacts/{filename}"
     lg.debug("Added artifact URL to the payload")
     send_payload = th.Thread(target=postTestServer, args=(
-        "update", number, repo, originRepo, data[repo][number
+        "update", number, repo, originRepo, mc_version, data[repo][number
                                                        ]["download"]))
     send_payload.start()
     json_dump(data)
