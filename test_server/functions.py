@@ -61,9 +61,9 @@ class ports:
             lg.debug("Updated json")
 
 
-def create_server(port, pr_number: str, mod, modfile):
+def create_server(port, pr_number: str, mod, modfile) -> None:
+    """Create or update a server with given pr_number and modfile"""
     lg.info(f"{mod} ({pr_number}): Starting to create/update server")
-    # Create or update a server with given pr_number and modfile
     server_folder = config("server_folder")+f"{mod}-{pr_number}/"
     if os.path.isdir(server_folder):
         lg.info(f"{mod} ({pr_number}): Serverfiles found, updating mod")
@@ -101,8 +101,8 @@ def create_server(port, pr_number: str, mod, modfile):
     lg.info(f"{mod} ({pr_number}): Started Screen/Server")
 
 
-def delete_server(pr_number: str, mod: str):
-    # Delete existing server
+def delete_server(pr_number: str, mod: str) -> None:
+    """Delete existing server"""
     lg.debug(f"{mod} ({pr_number}): Deleting server...")
     server_folder = config("server_folder")+f"{mod}-{pr_number}"
     os.system(f"screen -S {mod}-{pr_number} -X quit")

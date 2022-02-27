@@ -62,7 +62,7 @@ class Requests(BaseHTTPRequestHandler):
                 f"An exception happened during the processing (probably because the payload was not from mainserver).\nBody:\n{_rfile}")
             self.send_response(400, "Wrong message")
         # check content
-        if not set(("event", "prNumber", "repo", "modFile")) == set(req.keys()):
+        if not set(("event", "prNumber", "repo", "modFile", "mc_version")) == set(req.keys()):
             lg.warning("Wrong json structure, sending 400")
             self.send_response(400, "Wrong json structure")
         if req["prNumber"] == "":
