@@ -84,7 +84,7 @@ class Requests(BaseHTTPRequestHandler):
             lg.info("Found available port")
             port = self.ports.get_port(f"{req['repo']}-{req['prNumber']}")
             x = threading.Thread(target=functions.create_server, args=(
-                port, req['prNumber'], req['repo'], req['modFile']))
+                port, req['prNumber'], req['repo'], req['modFile'], req["mc_version"]))
             x.start()
             lg.info(f"{req['repo']} ({req['prNumber']}): Started thread for creating of server")
         else:
