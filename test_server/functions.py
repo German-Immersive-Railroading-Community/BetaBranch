@@ -61,7 +61,7 @@ class ports:
             lg.debug("Updated json")
 
 
-def create_server(port, pr_number: str, mod : str, modfile, mc_version : str) -> None:
+def create_server(port, pr_number: str, mod: str, modfile, mc_version: str) -> None:
     """Create or update a server with given pr_number and modfile"""
     lg.info(f"{mod} ({pr_number}): Starting to create/update server")
     server_folder = config("server_folder")+f"{mod}-{pr_number}/"
@@ -73,13 +73,9 @@ def create_server(port, pr_number: str, mod : str, modfile, mc_version : str) ->
         lg.debug(f"{mod} ({pr_number}): Removed mod")
     else:
         lg.info(f"{mod} ({pr_number}): No serverfiles found, creating new")
-        if mod.lower() == "girsignals":
-            # TODO: Setup different server files; wait for Jeronimo
-            pass
-        else:
-            mc_version = config("fallback_server_files") if not mc_version in os.listdir(config("server_files")) else mc_version
-            shutil.copytree(str(config("server_files")) + f"/{mc_version}",
-                            server_folder)
+        mc_version = "girsignals" if mod.lower() == "girsignals" else mc_version
+        shutil.copytree(str(config("server_files")) + f"/{mc_version}",
+                        server_folder)
         lg.debug(f"{mod} ({pr_number}): Created serverfiles")
     r = requests.get(modfile, stream=True)
     lg.debug(f"{mod} ({pr_number}): Requested modfile")

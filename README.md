@@ -24,5 +24,4 @@ min_port=<lowest port to use>
 max_port=<highest port to use>
 log_level=<DEBUG, INFO, ...>
 logDir=<directory in which the logs should be saved>
-fallback_server_files=<the server files that should be used if the files for mc_version do not exist, must be located in server_files-folder>
 ```
