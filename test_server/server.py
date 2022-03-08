@@ -62,7 +62,7 @@ class Requests(BaseHTTPRequestHandler):
                 f"An exception happened during the processing (probably because the payload was not from mainserver).\nBody:\n{_rfile}")
             self.send_response(400, "Wrong message")
         # check content
-        if not set(("event", "prNumber", "repo", "modFile")) == set(req.keys()):
+        if not set(("event", "prNumber", "repo", "modFile", "mc_version")) == set(req.keys()):
             lg.warning("Wrong json structure, sending 400")
             self.send_response(400, "Wrong json structure")
         if req["prNumber"] == "":
@@ -84,7 +84,7 @@ class Requests(BaseHTTPRequestHandler):
             lg.info("Found available port")
             port = self.ports.get_port(f"{req['repo']}-{req['prNumber']}")
             x = threading.Thread(target=functions.create_server, args=(
-                port, req['prNumber'], req['repo'], req['modFile']))
+                port, req['prNumber'], req['repo'], req['modFile'], req["mc_version"]))
             x.start()
             lg.info(f"{req['repo']} ({req['prNumber']}): Started thread for creating of server")
         else:
@@ -124,7 +124,7 @@ class Requests(BaseHTTPRequestHandler):
                     if self.ports.is_port_avail():
                         self.update_queue()
                     else:
-                        lg.debug("Not port available, stopping processing of queue")
+                        lg.debug("No port available, stopping processing of queue")
                         break
         else:
             open("queue.json", "a").close()
@@ -154,5 +154,4 @@ class Requests(BaseHTTPRequestHandler):
 
 
 httpd = HTTPServer(('0.0.0.0', 4433), Requests)
-# httpd.socket = context.wrap_socket(httpd.socket, server_side=True)
 httpd.serve_forever()

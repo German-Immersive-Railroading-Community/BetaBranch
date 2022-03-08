@@ -18,7 +18,7 @@ gh-actions=<list of the actions of PRs which should be processed (opened, closed
 
 Test:
 ```
-server_files=<path to folder where the files for the testing servers are copied from>
+server_files=<path to folder where the folders for the testing servers are copied from>
 server_folder=<path to folder where the testing servers are created>
 min_port=<lowest port to use>
 max_port=<highest port to use>
