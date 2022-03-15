@@ -74,7 +74,15 @@ def create_server(port, pr_number: str, mod: str, modfile, mc_version: str) -> N
     else:
         lg.info(f"{mod} ({pr_number}): No serverfiles found, creating new")
         mc_version = "girsignals" if mod.lower() == "girsignals" else mc_version
-        shutil.copytree(str(config("server_files")) + f"/{mc_version}",
+        copypath = str(config("server_files")) + f"/{mc_version}"
+        if not os.path.exists(copypath):
+            lg.debug("Path does not exist, trying major version detect.")
+            for dir in os.listdir(str(config("server_files"))):
+                if mc_version in dir:
+                    copypath = str(config("server_files")) + dir
+                    lg.debug(f"Version probably is {dir}; using that")
+                    break
+        shutil.copytree(copypath,
                         server_folder)
         lg.debug(f"{mod} ({pr_number}): Created serverfiles")
     r = requests.get(modfile, stream=True)
