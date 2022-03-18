@@ -140,14 +140,15 @@ def existing_new(readfile, header, json_rfile, repo, originRepo, entry_number) -
         lg.info(f"Found mc-version {mc_version}")
     else:
         lg.debug("No match found in head-ref, trying to find in base-ref")
-        version_match = version_pattern.search(json_rfile["base"]["ref"])
+        version_match = version_pattern.search(json_rfile["pull_request"]["base"]["ref"])
         if version_match:
             mc_version = str(version_match.group(0)).replace(".", "")
             lg.info(f"Found mc-version {mc_version} in base-ref")
 
     # getting the Artifact URL... Technically; adding that to the json
     ListEmpty = False
-    while not ListEmpty:
+    tries = 0
+    while not ListEmpty and tries <= 10:
         time.sleep(90)
         lg.info("Getting information from AppVeyor")
         resp = http.request(
@@ -166,6 +167,7 @@ def existing_new(readfile, header, json_rfile, repo, originRepo, entry_number) -
             lg.info("Found build, proceeding to send data to testserver")
             ListEmpty = True
         except IndexError:
+            tries += 1
             lg.warning(
                 f"No build available ({repo} : {head_ref})! Retrying...")
             continue
@@ -195,6 +197,8 @@ class Requests(BaseHTTPRequestHandler):
         _rfile = self.rfile.read()
         json_rfile = json.loads(_rfile)
         actions = str(config('gh-actions')).split(",")
+        lg.info("Received a request, processing")
+        lg.debug(json_rfile)
         # Determine Repo
         try:
             if not json_rfile["action"] in actions:
