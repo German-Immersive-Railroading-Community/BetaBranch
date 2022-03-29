@@ -1,5 +1,5 @@
 autopep8==1.5.7
-pycodestyle==2.7.0
+pycodestyle==2.8.0
 python-decouple==3.4
 toml==0.10.2
 urllib3==1.26.6
