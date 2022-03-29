@@ -1,6 +1,6 @@
 autopep8==1.5.7
 pycodestyle==2.8.0
-python-decouple==3.4
+python-decouple==3.6
 toml==0.10.2
 urllib3==1.26.9
 requests==2.27.1
