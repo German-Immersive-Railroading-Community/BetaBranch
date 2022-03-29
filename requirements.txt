@@ -3,4 +3,4 @@ pycodestyle==2.7.0
 python-decouple==3.4
 toml==0.10.2
 urllib3==1.26.6
-requests==2.26.0
+requests==2.27.1
