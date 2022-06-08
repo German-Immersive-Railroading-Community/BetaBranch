@@ -199,6 +199,8 @@ class Requests(BaseHTTPRequestHandler):
         actions = str(config('gh-actions')).split(",")
         lg.info("Received a request, processing")
         lg.debug(json_rfile)
+        if "dependabot" in json_rfile["pull_request"]["user"]["login"]:
+            return
         # Determine Repo
         try:
             if not json_rfile["action"] in actions:
