@@ -18,7 +18,7 @@ if not os.path.exists(logdir):
 open(logname, 'a').close()
 log_level = str(config('log_level')).upper()
 lg.basicConfig(filename=logname, level=log_level,
-               format='%(asctime)s : %(message)s', datefmt='%I:%M:%S')
+               format='%(asctime)s : %(message)s', datefmt='%d.%m %I:%M:%S')
 
 lg.info("Starting up")
 
