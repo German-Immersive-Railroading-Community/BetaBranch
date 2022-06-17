@@ -254,7 +254,7 @@ class Requests(BaseHTTPRequestHandler):
 
 
 # Starting Webserver
-context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
 context.load_cert_chain(config("cert_path"), config("priv_path"))
 context.load_verify_locations(config("full_path"))
 
