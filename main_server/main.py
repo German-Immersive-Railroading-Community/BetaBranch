@@ -62,7 +62,7 @@ with open(json_file, "r+") as _file:
 data = implement(beta_json, data)
 
 
-def postTestServer(event: str, number: str, repo: str, originRepo: str, mc_version : str = "", fileURL: str = "") -> None:
+def postTestServer(event: str, number: str, repo: str, originRepo: str, mc_version: str = "", fileURL: str = "") -> None:
     """Sends a POST-Request to the testserver"""
     lg.info("Started to send payload to testserver")
     valid = False
@@ -133,14 +133,16 @@ def existing_new(readfile, header, json_rfile, repo, originRepo, entry_number) -
 
     mc_version = "1122"
     lg.debug(f"Set mc_version to {mc_version}")
-    version_pattern = re.compile(r"\s*(1\.1[2-8](\.[1-9])?)\s*", flags= re.MULTILINE)
+    version_pattern = re.compile(
+        r"\s*(1\.1[2-8](\.[1-9])?)\s*", flags=re.MULTILINE)
     version_match = version_pattern.search(head_ref)
     if version_match:
         mc_version = str(version_match.group(0)).replace(".", "")
         lg.info(f"Found mc-version {mc_version}")
     else:
         lg.debug("No match found in head-ref, trying to find in base-ref")
-        version_match = version_pattern.search(json_rfile["pull_request"]["base"]["ref"])
+        version_match = version_pattern.search(
+            json_rfile["pull_request"]["base"]["ref"])
         if version_match:
             mc_version = str(version_match.group(0)).replace(".", "")
             lg.info(f"Found mc-version {mc_version} in base-ref")
@@ -176,14 +178,14 @@ def existing_new(readfile, header, json_rfile, repo, originRepo, entry_number) -
     lg.debug("Added artifact URL to the payload")
     send_payload = th.Thread(target=postTestServer, args=(
         "update", number, repo, originRepo, mc_version, data[repo][number
-                                                       ]["download"]))
+                                                                   ]["download"]))
     send_payload.start()
     json_dump(data)
 
 
 class Requests(BaseHTTPRequestHandler):
     def do_POST(self):
-        self.send_response(204, "It worked!")
+        self.send_response(204)
         self.send_header("Cache-Control", "no-cache")
         self.send_header("Expires", "-1")
         self.send_header("Pragma", "no-cache")
@@ -194,6 +196,12 @@ class Requests(BaseHTTPRequestHandler):
         self.send_header("Connection", "close")
         self.end_headers()
         lg.debug("Got POST-request, processed")
+        # TODO This needs a serious rework
+        # 0. Verify here, not in the functions (WTF?)
+        # 1. Rethink the log messages (processed? Bad expression) and maybe add context from which PR the log message is
+        # 2. Rework the check/verify prio (first check if it is from dependabot? Tf? Why?)
+        # 3. Why do I need a data file?
+        # Concl.: Was I drunk? 
         _rfile = self.rfile.read()
         json_rfile = json.loads(_rfile)
         actions = str(config('gh-actions')).split(",")
