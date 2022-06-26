@@ -26,10 +26,18 @@ lg.basicConfig(filename=logname, level=log_level,
 
 lg.info("Starting up")
 
+
+# Setting variables
+http = url.PoolManager()
+json_file = str(config("json_file")) + "beta.json"
+data = {}
+actions = str(config('gh-actions')).split(",")
+with open(json_file, "r+") as _file:
+    beta_json = json.loads(_file.read())
+    lg.debug("Loaded beta.json")
+data = implement(beta_json, data)
 # Making a List of IPs from UTR
-IPs = []
-for ip in open('UTR_IPs.txt', 'r'):
-    IPs.append(str(ip.replace('\n', '')))
+IPs = [ip.replace('\n', '') for ip in open('UTR_IPs.txt', 'r')]
 lg.debug("Made list of IPs from UTR")
 
 
@@ -44,11 +52,6 @@ def implement(json, data):
     return data
 
 
-http = url.PoolManager()
-json_file = str(config("json_file")) + "beta.json"
-data = {}
-
-
 def json_dump(data):
     lg.debug("Dumping to json...")
     with open(json_file, "w+") as dump_file:
@@ -56,27 +59,21 @@ def json_dump(data):
         lg.debug("Dumped to json")
 
 
-with open(json_file, "r+") as _file:
-    beta_json = json.loads(_file.read())
-    lg.debug("Loaded beta.json")
-data = implement(beta_json, data)
-
-
 def postTestServer(event: str, number: str, repo: str, originRepo: str, mc_version: str = "", fileURL: str = "") -> None:
     """Sends a POST-Request to the testserver"""
     lg.info("Started to send payload to testserver")
     valid = False
     number = str(number)
+    testRequest = {}
+    testRequest["event"] = event
+    testRequest["prNumber"] = number
+    testRequest["modFile"] = fileURL
+    testRequest["repo"] = originRepo
+    testRequest["mc_version"] = mc_version
+    len_cont = len(str(testRequest))
+    data_body = json.dumps(testRequest).encode("utf-8")
+    lg.info("Set up payload body, proceeding to sending")
     while not valid:
-        testRequest = {}
-        testRequest["event"] = event
-        testRequest["prNumber"] = number
-        testRequest["modFile"] = fileURL
-        testRequest["repo"] = originRepo
-        testRequest["mc_version"] = mc_version
-        len_cont = len(str(testRequest))
-        data_body = json.dumps(testRequest).encode("utf-8")
-        lg.info("Set up payload body, proceeding to sending")
         testResp = http.request(
             "POST", str(config("testURL")), body=data_body, headers={"Content-Length": f"{len_cont}"})
         time.sleep(5)
@@ -93,31 +90,18 @@ def postTestServer(event: str, number: str, repo: str, originRepo: str, mc_versi
     json_dump(data)
 
 
-def verify(readfile, header, event, entry_number, repo, originRepo) -> bool:
+def verify(readfile, header) -> bool:
     """A function to verify a request"""
     # Calculate hmac
     h_object = hmac.new(bytes(config("secret"), "utf8"), readfile, hl.sha256)
     h_digest = "sha256=" + str(h_object.hexdigest())
     lg.info("Calculated the hmac")
     # Check the hmac
-    if not h_digest == str(header["X-Hub-Signature-256"]):
-        lg.info("hmac is not right, aborting.")
-        return False
-    elif event == "other":
-        lg.info("hmac okay, proceeding with routine 'others'")
-        return True
-    elif event == "remove":
-        lg.info("hmac okay, proceeding with routine 'remove'")
-        send_payload = th.Thread(target=postTestServer, args=(
-            "remove", entry_number, repo, originRepo))
-        send_payload.start()
-        return True
+    return h_digest == str(header["X-Hub-Signature-256"])
 
 
 def existing_new(readfile, header, json_rfile, repo, originRepo, entry_number) -> None:
     """The function that prepares everything for updating or creating a server"""
-    if not verify(readfile, header, "other", entry_number, repo, originRepo):
-        return
     number = str(json_rfile["number"])
     # Check if PR exists in json
     if not repo in data:
@@ -195,47 +179,40 @@ class Requests(BaseHTTPRequestHandler):
         self.send_header("X-Xss-Protection", "1; mode=block")
         self.send_header("Connection", "close")
         self.end_headers()
-        lg.debug("Got POST-request, processed")
+        lg.debug("Got POST-request, send response")
         # TODO This needs a serious rework
-        # 0. Verify here, not in the functions (WTF?)
+        # 0. Verify here, not in the functions (WTF?) - Done
         # 1. Rethink the log messages (processed? Bad expression) and maybe add context from which PR the log message is
-        # 2. Rework the check/verify prio (first check if it is from dependabot? Tf? Why?)
-        # 3. Why do I need a data file?
-        # Concl.: Was I drunk? 
+        # 2. Rework the check/verify prio (first check if it is from dependabot? Tf? Why?) - Done
+        # Concl.: Was I drunk?
         _rfile = self.rfile.read()
         json_rfile = json.loads(_rfile)
-        actions = str(config('gh-actions')).split(",")
         lg.info("Received a request, processing")
         lg.debug(json_rfile)
-        if "dependabot" in json_rfile["pull_request"]["user"]["login"]:
+        if not verify(_rfile, self.headers) or "dependabot" in json_rfile["pull_request"]["user"]["login"] or not json_rfile["action"] in actions:
             return
         # Determine Repo
-        try:
-            if not json_rfile["action"] in actions:
-                return
-            originRepo = json_rfile["pull_request"]["head"]["repo"]["name"]
-            repo = str(originRepo).lower()
-            entry_number = str(json_rfile["number"])
-            # Check if closed or not
-            if json_rfile["action"] == "closed":
-                lg.info("Detected that the action is 'closed'")
-                if verify(_rfile, self.headers, "remove",
-                          entry_number, repo, originRepo):
-                    try:
-                        del data[repo][entry_number]
-                        lg.info(f"Deleted the entry ({entry_number}).")
-                    except KeyError:
-                        lg.warning(
-                            f"There was an error deleting an entry! Repo: {repo}, Entry: {entry_number}.")
-                    json_dump(data)
-            # start the magic
-            else:
-                existing_new_thread = th.Thread(target=existing_new, args=(
-                    _rfile, self.headers, json_rfile, repo, originRepo, entry_number))
-                existing_new_thread.start()
-        except:
-            lg.exception(
-                "An error occured while getting important variables (probably because the payload is not from GH).")
+        originRepo = json_rfile["pull_request"]["head"]["repo"]["name"]
+        repo = str(originRepo).lower()
+        entry_number = str(json_rfile["number"])
+        # Check if closed or not
+        if json_rfile["action"] == "closed":
+            lg.info("Detected that the action is 'closed'")
+            send_payload = th.Thread(target=postTestServer, args=(
+            "remove", entry_number, repo, originRepo))
+            send_payload.start()
+            try:
+                del data[repo][entry_number]
+                lg.info(f"Deleted the entry ({entry_number}).")
+            except KeyError:
+                lg.warning(
+                    f"There was an error deleting an entry! Repo: {repo}, Entry: {entry_number}.")
+            json_dump(data)
+        # start the magic
+        else:
+            existing_new_thread = th.Thread(target=existing_new, args=(
+                _rfile, self.headers, json_rfile, repo, originRepo, entry_number))
+            existing_new_thread.start()
 
     # GET for UTR checks
 
