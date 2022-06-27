@@ -61,7 +61,7 @@ def json_dump(data):
 
 def postTestServer(event: str, number: str, repo: str, originRepo: str, mc_version: str = "", fileURL: str = "") -> None:
     """Sends a POST-Request to the testserver"""
-    lg.info("Started to send payload to testserver")
+    lg.info(f"{originRepo}#{entry_number}: Started to send payload to testserver")
     valid = False
     number = str(number)
     testRequest = {}
@@ -72,20 +72,22 @@ def postTestServer(event: str, number: str, repo: str, originRepo: str, mc_versi
     testRequest["mc_version"] = mc_version
     len_cont = len(str(testRequest))
     data_body = json.dumps(testRequest).encode("utf-8")
-    lg.info("Set up payload body, proceeding to sending")
+    lg.info(
+        f"{originRepo}#{entry_number}: Set up payload body, proceeding to sending")
     while not valid:
         testResp = http.request(
             "POST", str(config("testURL")), body=data_body, headers={"Content-Length": f"{len_cont}"})
-        time.sleep(5)
+        time.sleep(1)
         if not testResp.status == 204:
             lg.warning(
-                f"Request to Testserver was not OK! Code: {str(testResp.status)}. Retrying...")
+                f"{originRepo}#{entry_number}: Request to Testserver was not OK! Code: {str(testResp.status)}. Retrying...")
             continue
         else:
-            lg.info("Sending successful")
+            lg.info(f"{originRepo}#{entry_number}: Sending successful")
             if not event == "remove":
                 data[repo][number]["port"] = testResp.reason
-                lg.debug("Added port to beta.json")
+                lg.debug(
+                    f"{originRepo}#{entry_number}: Added port to beta.json")
             valid = True
     json_dump(data)
 
@@ -116,50 +118,54 @@ def existing_new(readfile, header, json_rfile, repo, originRepo, entry_number) -
     # Sidenote: These variable names are terrible
 
     mc_version = "1122"
-    lg.debug(f"Set mc_version to {mc_version}")
+    lg.debug(f"{originRepo}#{entry_number}: Set mc_version to {mc_version}")
     version_pattern = re.compile(
         r"\s*(1\.1[2-8](\.[1-9])?)\s*", flags=re.MULTILINE)
     version_match = version_pattern.search(head_ref)
     if version_match:
         mc_version = str(version_match.group(0)).replace(".", "")
-        lg.info(f"Found mc-version {mc_version}")
+        lg.info(f"{originRepo}#{entry_number}: Found mc-version {mc_version}")
     else:
-        lg.debug("No match found in head-ref, trying to find in base-ref")
+        lg.debug(
+            f"{originRepo}#{entry_number}: No match found in head-ref, trying to find in base-ref")
         version_match = version_pattern.search(
             json_rfile["pull_request"]["base"]["ref"])
         if version_match:
             mc_version = str(version_match.group(0)).replace(".", "")
-            lg.info(f"Found mc-version {mc_version} in base-ref")
+            lg.info(
+                f"{originRepo}#{entry_number}: Found mc-version {mc_version} in base-ref")
 
     # getting the Artifact URL... Technically; adding that to the json
     ListEmpty = False
     tries = 0
     while not ListEmpty and tries <= 10:
         time.sleep(90)
-        lg.info("Getting information from AppVeyor")
+        lg.info(f"{originRepo}#{entry_number}: Getting information from AppVeyor")
         resp = http.request(
             "GET", f"https://ci.appveyor.com/api/projects/MrTroble/{repo}/branch/{head_ref}", headers={"Content-Type": "application/json"})
-        lg.debug(f"Requested information about the branch {head_ref}")
+        lg.debug(
+            f"{originRepo}#{entry_number}: Requested information about the branch {head_ref}")
         json_resp = json.loads(resp.data)
         job_id = json_resp["build"]["jobs"][0]["jobId"]
-        lg.debug("Extracted the buildjob-id")
+        lg.debug(f"{originRepo}#{entry_number}: Extracted the buildjob-id")
         art_resp = http.request(
             "GET", f"https://ci.appveyor.com/api/buildjobs/{job_id}/artifacts")
         lg.debug(
-            f"Requested the url of the artifact (file) of buildjob {job_id}")
+            f"{originRepo}#{entry_number}: Requested the url of the artifact (file) of buildjob {job_id}")
         artifacts = json.loads(art_resp.data)
         try:
             filename = artifacts[0]["fileName"]
-            lg.info("Found build, proceeding to send data to testserver")
+            lg.info(
+                f"{originRepo}#{entry_number}: Found build, proceeding to send data to testserver")
             ListEmpty = True
         except IndexError:
             tries += 1
             lg.warning(
-                f"No build available ({repo} : {head_ref})! Retrying...")
+                f"{originRepo}#{entry_number}: No build available ({repo} : {head_ref})! Retrying...")
             continue
     data[repo][number
                ]["download"] = f"https://ci.appveyor.com/api/buildjobs/{job_id}/artifacts/{filename}"
-    lg.debug("Added artifact URL to the payload")
+    lg.debug(f"{originRepo}#{entry_number}: Added artifact URL to the payload")
     send_payload = th.Thread(target=postTestServer, args=(
         "update", number, repo, originRepo, mc_version, data[repo][number
                                                                    ]["download"]))
@@ -179,12 +185,7 @@ class Requests(BaseHTTPRequestHandler):
         self.send_header("X-Xss-Protection", "1; mode=block")
         self.send_header("Connection", "close")
         self.end_headers()
-        lg.debug("Got POST-request, send response")
-        # TODO This needs a serious rework
-        # 0. Verify here, not in the functions (WTF?) - Done
-        # 1. Rethink the log messages (processed? Bad expression) and maybe add context from which PR the log message is
-        # 2. Rework the check/verify prio (first check if it is from dependabot? Tf? Why?) - Done
-        # Concl.: Was I drunk?
+        lg.debug("Got POST-request, sent response")
         _rfile = self.rfile.read()
         json_rfile = json.loads(_rfile)
         lg.info("Received a request, processing")
@@ -197,16 +198,18 @@ class Requests(BaseHTTPRequestHandler):
         entry_number = str(json_rfile["number"])
         # Check if closed or not
         if json_rfile["action"] == "closed":
-            lg.info("Detected that the action is 'closed'")
+            lg.info(
+                f"{originRepo}#{entry_number}: Detected that the action is 'closed'")
             send_payload = th.Thread(target=postTestServer, args=(
-            "remove", entry_number, repo, originRepo))
+                "remove", entry_number, repo, originRepo))
             send_payload.start()
             try:
                 del data[repo][entry_number]
-                lg.info(f"Deleted the entry ({entry_number}).")
+                lg.info(
+                    f"{originRepo}#{entry_number}: Deleted the entry ({entry_number}).")
             except KeyError:
                 lg.warning(
-                    f"There was an error deleting an entry! Repo: {repo}, Entry: {entry_number}.")
+                    f"{originRepo}#{entry_number}: There was an error deleting the entry!")
             json_dump(data)
         # start the magic
         else:
