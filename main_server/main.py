@@ -190,14 +190,25 @@ class Requests(BaseHTTPRequestHandler):
         json_rfile = json.loads(_rfile)
         lg.info("Received a request, processing")
         lg.debug(json_rfile)
-        if not verify(_rfile, self.headers) or "dependabot" in json_rfile["pull_request"]["user"]["login"] or not json_rfile["action"] in actions:
+        if not verify(_rfile, self.headers):
+            lg.info("Could not verify payload")
             return
-        # Determine Repo
+
         originRepo = json_rfile["pull_request"]["head"]["repo"]["name"]
         repo = str(originRepo).lower()
         entry_number = str(json_rfile["number"])
-        # Check if closed or not
-        if json_rfile["action"] == "closed":
+
+        if "dependabot" in json_rfile["pull_request"]["user"]["login"]:
+            lg.info(
+                f"{originRepo}#{entry_number}: PR is from Dependabot, aborting")
+            return
+        if not json_rfile["action"] in actions and "ref" not in json_rfile:
+            lg.info(
+                f"{originRepo}#{entry_number}: Payload not relevant, aborting")
+            return
+        # TODO Make another entry in the Data file ("meta"), list branches with list of PRs for that branch
+        # Yes, I'm technically making a Database with that... But I won't bother with SQL now, f u
+        if "ref" in json_rfile:
             lg.info(
                 f"{originRepo}#{entry_number}: Detected that the action is 'closed'")
             send_payload = th.Thread(target=postTestServer, args=(
